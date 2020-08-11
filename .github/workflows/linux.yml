@@ -9,8 +9,6 @@ on:
 jobs:
   build:
     runs-on: [ubuntu-latest]
-    container:
-      image: centos:7
     steps:
     - uses: actions/checkout@v1
     - name: Install dependencies
@@ -23,24 +21,24 @@ jobs:
         rpm -U --quiet p7zip-16.02-10.el7.x86_64.rpm
         rpm -U --quiet p7zip-plugins-16.02-10.el7.x86_64.rpm
         yum install -y make gcc-c++
-    - name: Build ninja
+    - name: Build shinobi
       shell: bash
       run: |
         mkdir build && cd build
         cmake -DCMAKE_BUILD_TYPE=Release ..
         cmake --build . --parallel --config Release
         ctest -vv
-        strip ninja
-    - name: Create ninja archive
+        strip shinobo
+    - name: Create shinobi archive
       run: |
         mkdir artifact
-        7z a artifact/ninja-linux.zip ./build/ninja
+        7z a artifact/shinobi-linux.zip ./build/shinobi
 
-    # Upload ninja binary archive as an artifact
+    # Upload shinobi binary archive as an artifact
     - name: Upload artifact
       uses: actions/upload-artifact@v1
       with:
-        name: ninja-binary-archives
+        name: shinobi-binary-archives
         path: artifact
 
     - name: Upload release asset
@@ -50,6 +48,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./artifact/ninja-linux.zip
-        asset_name: ninja-linux.zip
+        asset_path: ./artifact/shinobi-linux.zip
+        asset_name: shinobi-linux.zip
         asset_content_type: application/zip

@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run: brew install re2c p7zip cmake
 
-    - name: Build ninja
+    - name: Build shinobi
       shell: bash
       run: |
         mkdir build && cd build
@@ -24,17 +24,17 @@ jobs:
         cmake --build . --parallel --config Release
         ctest -vv
 
-    - name: Create ninja archive
+    - name: Create shinobi archive
       shell: bash
       run: |
         mkdir artifact
-        7z a artifact/ninja-mac.zip ./build/ninja
+        7z a artifact/shinobi-mac.zip ./build/shinobi
 
-    # Upload ninja binary archive as an artifact
+    # Upload shinobi binary archive as an artifact
     - name: Upload artifact
       uses: actions/upload-artifact@v1
       with:
-        name: ninja-binary-archives
+        name: shinobi-binary-archives
         path: artifact
 
     - name: Upload release asset
@@ -44,6 +44,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./artifact/ninja-mac.zip
-        asset_name: ninja-mac.zip
+        asset_path: ./artifact/shinobi-mac.zip
+        asset_name: shinobi-mac.zip
         asset_content_type: application/zip

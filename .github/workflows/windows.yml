@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run: choco install re2c
 
-    - name: Build ninja
+    - name: Build shinobi
       shell: bash
       run: |
         mkdir build && cd build
@@ -24,17 +24,17 @@ jobs:
         cmake --build . --parallel --config Release
         ctest -vv
 
-    - name: Create ninja archive
+    - name: Create shinobi archive
       shell: bash
       run: |
         mkdir artifact
-        7z a artifact/ninja-win.zip ./build/Release/ninja.exe
+        7z a artifact/shinobi-win.zip ./build/Release/shinobi.exe
 
-    # Upload ninja binary archive as an artifact
+    # Upload shinobi binary archive as an artifact
     - name: Upload artifact
       uses: actions/upload-artifact@v1
       with:
-        name: ninja-binary-archives
+        name: shinobi-binary-archives
         path: artifact
 
     - name: Upload release asset
@@ -44,6 +44,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./artifact/ninja-win.zip
-        asset_name: ninja-win.zip
+        asset_path: ./artifact/shinobi-win.zip
+        asset_name: shinobi-win.zip
         asset_content_type: application/zip

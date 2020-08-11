@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
-project(ninja)
+project(shinobi)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -30,7 +30,7 @@ endif()
 
 find_program(RE2C re2c)
 if(RE2C)
-	# the depfile parser and ninja lexers are generated using re2c.
+	# the depfile parser and shinobi lexers are generated using re2c.
 	function(re2c IN OUT)
 		add_custom_command(DEPENDS ${IN} OUTPUT ${OUT}
 			COMMAND ${RE2C} -b -i --no-generation-date -o ${OUT} ${IN}
@@ -38,15 +38,15 @@ if(RE2C)
 	endfunction()
 	re2c(${CMAKE_SOURCE_DIR}/src/depfile_parser.in.cc ${CMAKE_BINARY_DIR}/depfile_parser.cc)
 	re2c(${CMAKE_SOURCE_DIR}/src/lexer.in.cc ${CMAKE_BINARY_DIR}/lexer.cc)
-	add_library(libninja-re2c OBJECT ${CMAKE_BINARY_DIR}/depfile_parser.cc ${CMAKE_BINARY_DIR}/lexer.cc)
+	add_library(libshinobi-re2c OBJECT ${CMAKE_BINARY_DIR}/depfile_parser.cc ${CMAKE_BINARY_DIR}/lexer.cc)
 else()
 	message(WARNING "re2c was not found; changes to src/*.in.cc will not affect your build.")
-	add_library(libninja-re2c OBJECT src/depfile_parser.cc src/lexer.cc)
+	add_library(libshinobi-re2c OBJECT src/depfile_parser.cc src/lexer.cc)
 endif()
-target_include_directories(libninja-re2c PRIVATE src)
+target_include_directories(libshinobi-re2c PRIVATE src)
 
-# Core source files all build into ninja library.
-add_library(libninja OBJECT
+# Core source files all build into shinobi library.
+add_library(libshinobi OBJECT
 	src/build_log.cc
 	src/build.cc
 	src/clean.cc
@@ -70,7 +70,7 @@ add_library(libninja OBJECT
 	src/version.cc
 )
 if(WIN32)
-	target_sources(libninja PRIVATE
+	target_sources(libshinobi PRIVATE
 		src/subprocess-win32.cc
 		src/includes_normalize-win32.cc
 		src/msvc_helper-win32.cc
@@ -78,23 +78,23 @@ if(WIN32)
 		src/getopt.c
 	)
 	if(MSVC)
-		target_sources(libninja PRIVATE src/minidump-win32.cc)
+		target_sources(libshinobi PRIVATE src/minidump-win32.cc)
 	endif()
 else()
-	target_sources(libninja PRIVATE src/subprocess-posix.cc)
+	target_sources(libshinobi PRIVATE src/subprocess-posix.cc)
 endif()
 
 #Fixes GetActiveProcessorCount on MinGW
 if(MINGW)
-target_compile_definitions(libninja PRIVATE _WIN32_WINNT=0x0601 __USE_MINGW_ANSI_STDIO=1)
+target_compile_definitions(libshinobi PRIVATE _WIN32_WINNT=0x0601 __USE_MINGW_ANSI_STDIO=1)
 endif()
 
 # Main executable is library plus main() function.
-add_executable(ninja src/ninja.cc)
-target_link_libraries(ninja PRIVATE libninja libninja-re2c)
+add_executable(shinobi src/ninja.cc)
+target_link_libraries(shinobi PRIVATE libshinobi libshinobi-re2c)
 
-# Tests all build into ninja_test executable.
-add_executable(ninja_test
+# Tests all build into shinobi_test executable.
+add_executable(shinobi_test
 	src/build_log_test.cc
 	src/build_test.cc
 	src/clean_test.cc
@@ -115,9 +115,9 @@ add_executable(ninja_test
 	src/util_test.cc
 )
 if(WIN32)
-	target_sources(ninja_test PRIVATE src/includes_normalize_test.cc src/msvc_helper_test.cc)
+	target_sources(shinobi_test PRIVATE src/includes_normalize_test.cc src/msvc_helper_test.cc)
 endif()
-target_link_libraries(ninja_test PRIVATE libninja libninja-re2c)
+target_link_libraries(shinobi_test PRIVATE libshinobi libshinobi-re2c)
 
 foreach(perftest
   build_log_perftest
@@ -128,8 +128,8 @@ foreach(perftest
   manifest_parser_perftest
 )
   add_executable(${perftest} src/${perftest}.cc)
-  target_link_libraries(${perftest} PRIVATE libninja libninja-re2c)
+  target_link_libraries(${perftest} PRIVATE libshinobi libshinobi-re2c)
 endforeach()
 
 enable_testing()
-add_test(NinjaTest ninja_test)
+add_test(NinjaTest shinobi_test)
