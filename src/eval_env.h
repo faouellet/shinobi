@@ -17,8 +17,8 @@
 
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
-
 
 #include "string_piece.h"
 
@@ -26,7 +26,7 @@ struct Rule;
 
 /// An interface for a scope for variable (e.g. "$foo") lookups.
 struct Env {
-  virtual ~Env() {}
+  virtual ~Env() = default;
   virtual std::string LookupVariable(const std::string& var) = 0;
 };
 
@@ -52,13 +52,13 @@ struct EvalString {
 
 private:
   enum TokenType { RAW, SPECIAL };
-  typedef std::vector<std::pair<std::string, TokenType> > TokenList;
+  using TokenList = std::vector<std::pair<std::string, TokenType> >;
   TokenList parsed_;
 };
 
 /// An invokable build command and associated metadata (description, etc.).
 struct Rule {
-  explicit Rule(const std::string& name) : name_(name) {}
+  explicit Rule(std::string  name) : name_(std::move(name)) {}
 
   const std::string& name() const { return name_; }
 
@@ -73,18 +73,18 @@ struct Rule {
   friend struct ManifestParser;
 
   std::string name_;
-  typedef std::map<std::string, EvalString> Bindings;
+  using Bindings = std::map<std::string, EvalString>;
   Bindings bindings_;
 };
 
 /// An Env which contains a std::mapping of variables to values
 /// as well as a pointer to a parent scope.
 struct BindingEnv : public Env {
-  BindingEnv() : parent_(NULL) {}
+  BindingEnv() : parent_(nullptr) {}
   explicit BindingEnv(BindingEnv* parent) : parent_(parent) {}
 
-  virtual ~BindingEnv() {}
-  virtual std::string LookupVariable(const std::string& var);
+  ~BindingEnv() override = default;
+  std::string LookupVariable(const std::string& var) override;
 
   void AddRule(const Rule* rule);
   const Rule* LookupRule(const std::string& rule_name);

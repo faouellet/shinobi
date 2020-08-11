@@ -23,15 +23,15 @@
 #include <windows.h>
 #endif
 
-#include <assert.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <cassert>
+#include <cerrno>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 #ifndef _WIN32
@@ -95,7 +95,7 @@ bool CanonicalizePath(std::string* path, uint64_t* slash_bits,
                       std::string* err) {
   METRIC_RECORD("canonicalize str");
   size_t len = path->size();
-  char* str = 0;
+  char* str = nullptr;
   if (len > 0)
     str = &(*path)[0];
   if (!CanonicalizePath(str, &len, slash_bits, err))
@@ -243,16 +243,16 @@ static inline bool IsKnownWin32SafeCharacter(char ch) {
 }
 
 static inline bool StringNeedsShellEscaping(const std::string& input) {
-  for (size_t i = 0; i < input.size(); ++i) {
-    if (!IsKnownShellSafeCharacter(input[i]))
+  for (char i : input) {
+    if (!IsKnownShellSafeCharacter(i))
       return true;
   }
   return false;
 }
 
 static inline bool StringNeedsWin32Escaping(const std::string& input) {
-  for (size_t i = 0; i < input.size(); ++i) {
-    if (!IsKnownWin32SafeCharacter(input[i]))
+  for (char i : input) {
+    if (!IsKnownWin32SafeCharacter(i))
       return true;
   }
   return false;
@@ -401,14 +401,13 @@ const char* SpellcheckStringV(const std::string& text,
   const int kMaxValidEditDistance = 3;
 
   int min_distance = kMaxValidEditDistance + 1;
-  const char* result = NULL;
-  for (std::vector<const char*>::const_iterator i = words.begin();
-       i != words.end(); ++i) {
+  const char* result = nullptr;
+  for (auto word : words) {
     int distance =
-        EditDistance(*i, text, kAllowReplacements, kMaxValidEditDistance);
+        EditDistance(word, text, kAllowReplacements, kMaxValidEditDistance);
     if (distance < min_distance) {
       min_distance = distance;
-      result = *i;
+      result = word;
     }
   }
   return result;

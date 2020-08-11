@@ -66,7 +66,7 @@ int64_t GetTimeMillis();
 /// in seconds since Restart() was called.
 struct Stopwatch {
  public:
-  Stopwatch() : started_(0) {}
+  Stopwatch()  = default;
 
   /// Seconds since Restart() call.
   double Elapsed() const {
@@ -76,8 +76,8 @@ struct Stopwatch {
   void Restart() { started_ = Now(); }
 
  private:
-  uint64_t started_;
-  uint64_t Now() const;
+  uint64_t started_{0};
+  static uint64_t Now() ;
 };
 
 /// The primary interface to metrics.  Use METRIC_RECORD("foobar") at the top

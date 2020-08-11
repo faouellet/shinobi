@@ -14,10 +14,9 @@
 
 #include "deps_log.h"
 
-#include <assert.h>
-#include <errno.h>
-#include <stdio.h>
-
+#include <cassert>
+#include <cerrno>
+#include <cstdio>
 #include <cstring>
 #ifndef _WIN32
 #include <unistd.h>
@@ -57,7 +56,7 @@ bool DepsLog::OpenForWrite(const std::string& path, std::string* err) {
   }
   // Set the buffer size to this and flush the file buffer after every record
   // to make sure records aren't written partially.
-  setvbuf(file_, NULL, _IOFBF, kMaxRecordSize + 1);
+  setvbuf(file_, nullptr, _IOFBF, kMaxRecordSize + 1);
   SetCloseOnExec(fileno(file_));
 
   // Opening a file in append mode doesn't std::set the file pointer to the
@@ -84,7 +83,7 @@ bool DepsLog::OpenForWrite(const std::string& path, std::string* err) {
 bool DepsLog::RecordDeps(Node* node, TimeStamp mtime,
                          const std::vector<Node*>& nodes) {
   return RecordDeps(node, mtime, nodes.size(),
-                    nodes.empty() ? NULL : (Node**)&nodes.front());
+                    nodes.empty() ? nullptr : (Node**)&nodes.front());
 }
 
 bool DepsLog::RecordDeps(Node* node, TimeStamp mtime, int node_count,
@@ -137,7 +136,7 @@ bool DepsLog::RecordDeps(Node* node, TimeStamp mtime, int node_count,
   int id = node->id();
   if (fwrite(&id, 4, 1, file_) < 1)
     return false;
-  uint32_t mtime_part = static_cast<uint32_t>(mtime & 0xffffffff);
+  auto mtime_part = static_cast<uint32_t>(mtime & 0xffffffff);
   if (fwrite(&mtime_part, 4, 1, file_) < 1)
     return false;
   mtime_part = static_cast<uint32_t>((mtime >> 32) & 0xffffffff);
@@ -163,7 +162,7 @@ bool DepsLog::RecordDeps(Node* node, TimeStamp mtime, int node_count,
 void DepsLog::Close() {
   if (file_)
     fclose(file_);
-  file_ = NULL;
+  file_ = nullptr;
 }
 
 LoadStatus DepsLog::Load(const std::string& path, State* state,
@@ -312,7 +311,7 @@ DepsLog::Deps* DepsLog::GetDeps(Node* node) {
   // Abort if the node has no id (never referenced in the deps) or if
   // there's no deps recorded for the node.
   if (node->id() < 0 || node->id() >= (int)deps_.size())
-    return NULL;
+    return nullptr;
   return deps_[node->id()];
 }
 
@@ -332,8 +331,8 @@ bool DepsLog::Recompact(const std::string& path, std::string* err) {
 
   // Clear all known ids so that new ones can be reassigned.  The new indices
   // will refer to the ordering in new_log, not in the current log.
-  for (std::vector<Node*>::iterator i = nodes_.begin(); i != nodes_.end(); ++i)
-    (*i)->set_id(-1);
+  for (auto & node : nodes_)
+    node->set_id(-1);
 
   // Write out all deps again.
   for (int old_id = 0; old_id < (int)deps_.size(); ++old_id) {
@@ -384,7 +383,7 @@ bool DepsLog::UpdateDeps(int out_id, Deps* deps) {
   if (out_id >= (int)deps_.size())
     deps_.resize(out_id + 1);
 
-  bool delete_old = deps_[out_id] != NULL;
+  bool delete_old = deps_[out_id] != nullptr;
   if (delete_old)
     delete deps_[out_id];
   deps_[out_id] = deps;
@@ -403,7 +402,7 @@ bool DepsLog::RecordId(Node* node) {
   if (fwrite(&size, 4, 1, file_) < 1)
     return false;
   if (fwrite(node->path().data(), path_size, 1, file_) < 1) {
-    assert(node->path().size() > 0);
+    assert(!node->path().empty());
     return false;
   }
   if (padding && fwrite("\0\0", padding, 1, file_) < 1)

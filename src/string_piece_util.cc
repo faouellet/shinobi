@@ -27,10 +27,10 @@ std::vector<StringPiece> SplitStringPiece(StringPiece input, char sep) {
   for (;;) {
     const char* next_pos = std::find(pos, input.end(), sep);
     if (next_pos == input.end()) {
-      elems.push_back(StringPiece(pos, input.end() - pos));
+      elems.emplace_back(pos, input.end() - pos);
       break;
     }
-    elems.push_back(StringPiece(pos, next_pos - pos));
+    elems.emplace_back(pos, next_pos - pos);
     pos = next_pos + 1;
   }
 
@@ -38,7 +38,7 @@ std::vector<StringPiece> SplitStringPiece(StringPiece input, char sep) {
 }
 
 std::string JoinStringPiece(const std::vector<StringPiece>& list, char sep) {
-  if (list.size() == 0) {
+  if (list.empty()) {
     return "";
   }
 
@@ -46,8 +46,8 @@ std::string JoinStringPiece(const std::vector<StringPiece>& list, char sep) {
 
   {
     size_t cap = list.size() - 1;
-    for (size_t i = 0; i < list.size(); ++i) {
-      cap += list[i].len_;
+    for (auto i : list) {
+      cap += i.len_;
     }
     ret.reserve(cap);
   }

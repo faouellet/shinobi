@@ -376,7 +376,7 @@ TEST(CanonicalizePath, NotNullTerminated) {
 TEST(PathEscaping, TortureTest) {
   std::string result;
 
-  GetWin32EscapedString("foo bar\\\"'$@d!st!c'\\path'\\", &result);
+  GetWin32EscapedString(R"(foo bar\"'$@d!st!c'\path'\)", &result);
   EXPECT_EQ("\"foo bar\\\\\\\"'$@d!st!c'\\path'\\\\\"", result);
   result.clear();
 
@@ -397,7 +397,7 @@ TEST(PathEscaping, SensiblePathsAreNotNeedlesslyEscaped) {
 }
 
 TEST(PathEscaping, SensibleWin32PathsAreNotNeedlesslyEscaped) {
-  const char* path = "some\\sensible\\path\\without\\crazy\\characters.c++";
+  const char* path = R"(some\sensible\path\without\crazy\characters.c++)";
   std::string result;
 
   GetWin32EscapedString(path, &result);

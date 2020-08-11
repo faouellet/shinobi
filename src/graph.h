@@ -16,6 +16,7 @@
 #define NINJA_GRAPH_H_
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "dyndep.h"
@@ -35,9 +36,9 @@ struct State;
 /// Information about a node in the dependency graph: the file, whether
 /// it's dirty, mtime, etc.
 struct Node {
-  Node(const std::string& path, uint64_t slash_bits)
-      : path_(path), slash_bits_(slash_bits), mtime_(-1), dirty_(false),
-        dyndep_pending_(false), in_edge_(NULL), id_(-1) {}
+  Node(std::string  path, uint64_t slash_bits)
+      : path_(std::move(path)), slash_bits_(slash_bits), mtime_(-1), dirty_(false),
+        dyndep_pending_(false), in_edge_(nullptr), id_(-1) {}
 
   /// Return false on error.
   bool Stat(DiskInterface* disk_interface, std::string* err);
@@ -129,9 +130,7 @@ struct Edge {
   enum VisitMark { VisitNone, VisitInStack, VisitDone };
 
   Edge()
-      : rule_(NULL), pool_(NULL), dyndep_(NULL), env_(NULL), mark_(VisitNone),
-        outputs_ready_(false), deps_loaded_(false), deps_missing_(false),
-        implicit_deps_(0), order_only_deps_(0), implicit_outs_(0) {}
+      : rule_(nullptr), pool_(nullptr), dyndep_(nullptr), env_(nullptr) {}
 
   /// Return true if all inputs' in-edges are ready.
   bool AllInputsReady() const;
@@ -160,14 +159,14 @@ struct Edge {
   std::vector<Node*> outputs_;
   Node* dyndep_;
   BindingEnv* env_;
-  VisitMark mark_;
-  bool outputs_ready_;
-  bool deps_loaded_;
-  bool deps_missing_;
+  VisitMark mark_{VisitNone};
+  bool outputs_ready_{false};
+  bool deps_loaded_{false};
+  bool deps_missing_{false};
 
   const Rule& rule() const { return *rule_; }
   Pool* pool() const { return pool_; }
-  int weight() const { return 1; }
+  static int weight() { return 1; }
   bool outputs_ready() const { return outputs_ready_; }
 
   // There are three types of inputs.
@@ -178,8 +177,8 @@ struct Edge {
   //                     don't cause the target to rebuild.
   // These are stored in inputs_ in that order, and we keep counts of
   // #2 and #3 when we need to access the various substd::sets.
-  int implicit_deps_;
-  int order_only_deps_;
+  int implicit_deps_{0};
+  int order_only_deps_{0};
   bool is_implicit(size_t index) {
     return index >= inputs_.size() - order_only_deps_ - implicit_deps_ &&
            !is_order_only(index);
@@ -193,7 +192,7 @@ struct Edge {
   // 2) implicit outs, which the target generates but are not part of $out.
   // These are stored in outputs_ in that order, and we keep a count of
   // #2 to use when we need to access the various substd::sets.
-  int implicit_outs_;
+  int implicit_outs_{0};
   bool is_implicit_out(size_t index) const {
     return index >= outputs_.size() - implicit_outs_;
   }
@@ -230,7 +229,7 @@ struct ImplicitDepLoader {
 
   /// Preallocate \a count spaces in the input array on \a edge, returning
   /// an iterator pointing at the first new space.
-  std::vector<Node*>::iterator PreallocateSpace(Edge* edge, int count);
+  static std::vector<Node*>::iterator PreallocateSpace(Edge* edge, int count);
 
   /// If we don't have a edge that generates this input already,
   /// create one; this makes us not abort if the input is missing,
@@ -279,7 +278,7 @@ struct DependencyScan {
 
  private:
   bool RecomputeDirty(Node* node, std::vector<Node*>* stack, std::string* err);
-  bool VerifyDAG(Node* node, std::vector<Node*>* stack, std::string* err);
+  static bool VerifyDAG(Node* node, std::vector<Node*>* stack, std::string* err);
 
   /// Recompute whether a given single output should be marked dirty.
   /// Returns true if so.

@@ -27,7 +27,7 @@ static inline unsigned int MurmurHash2(const void* key, size_t len) {
   const unsigned int m = 0x5bd1e995;
   const int r = 24;
   unsigned int h = seed ^ len;
-  const unsigned char* data = (const unsigned char*)key;
+  const auto* data = (const unsigned char*)key;
   while (len >= 4) {
     unsigned int k;
     memcpy(&k, data, sizeof k);
@@ -62,8 +62,8 @@ static inline unsigned int MurmurHash2(const void* key, size_t len) {
 namespace std {
 template <>
 struct hash<StringPiece> {
-  typedef StringPiece argument_type;
-  typedef size_t result_type;
+  using argument_type = StringPiece;
+  using result_type = size_t;
 
   size_t operator()(StringPiece key) const {
     return MurmurHash2(key.str_, key.len_);
@@ -115,7 +115,7 @@ struct hash<StringPiece> {
 template <typename V>
 struct ExternalStringHashMap {
 #if (__cplusplus >= 201103L) || (_MSC_VER >= 1900)
-  typedef std::unordered_map<StringPiece, V> Type;
+  using Type = std::unordered_map<StringPiece, V>;
 #elif defined(_MSC_VER)
   typedef hash_map<StringPiece, V, StringPieceCmp> Type;
 #else

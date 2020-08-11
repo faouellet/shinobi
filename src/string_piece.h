@@ -25,9 +25,9 @@
 /// externally.  It is useful for reducing the number of std::strings
 /// we need to allocate.
 struct StringPiece {
-  typedef const char* const_iterator;
+  using const_iterator = const char *;
 
-  StringPiece() : str_(NULL), len_(0) {}
+  StringPiece() : str_(nullptr) {}
 
   /// The constructors intentionally allow for implicit conversions.
   StringPiece(const std::string& str) : str_(str.data()), len_(str.size()) {}
@@ -65,7 +65,7 @@ struct StringPiece {
   }
 
   const char* str_;
-  size_t len_;
+  size_t len_{0};
 };
 
 #endif  // NINJA_STRINGPIECE_H_

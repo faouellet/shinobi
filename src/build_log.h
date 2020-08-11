@@ -15,9 +15,8 @@
 #ifndef NINJA_BUILD_LOG_H_
 #define NINJA_BUILD_LOG_H_
 
+#include <cstdio>
 #include <string>
-#include <stdio.h>
-
 
 #include "hash_map.h"
 #include "load_status.h"
@@ -69,8 +68,8 @@ struct BuildLog {
           mtime == o.mtime;
     }
 
-    explicit LogEntry(const std::string& output);
-    LogEntry(const std::string& output, uint64_t command_hash,
+    explicit LogEntry(std::string  output);
+    LogEntry(std::string  output, uint64_t command_hash,
              int start_time, int end_time, TimeStamp restat_mtime);
   };
 
@@ -78,7 +77,7 @@ struct BuildLog {
   LogEntry* LookupByOutput(const std::string& path);
 
   /// Serialize an entry into a log file.
-  bool WriteEntry(FILE* f, const LogEntry& entry);
+  static bool WriteEntry(FILE* f, const LogEntry& entry);
 
   /// Rewrite the known log entries, throwing away old data.
   bool Recompact(const std::string& path, const BuildLogUser& user, std::string* err);
@@ -87,13 +86,13 @@ struct BuildLog {
   bool Restat(StringPiece path, const DiskInterface& disk_interface,
               int output_count, char** outputs, std::string* err);
 
-  typedef ExternalStringHashMap<LogEntry*>::Type Entries;
+  using Entries = ExternalStringHashMap<LogEntry *>::Type;
   const Entries& entries() const { return entries_; }
 
  private:
   Entries entries_;
   FILE* log_file_;
-  bool needs_recompaction_;
+  bool needs_recompaction_{false};
 };
 
 #endif // NINJA_BUILD_LOG_H_

@@ -15,8 +15,7 @@
 #ifndef NINJA_LINE_PRINTER_H_
 #define NINJA_LINE_PRINTER_H_
 
-#include <stddef.h>
-
+#include <cstddef>
 #include <string>
 
 /// Prints lines of text, possibly overprinting previously printed lines
@@ -49,10 +48,10 @@ struct LinePrinter {
   bool supports_color_;
 
   /// Whether the caret is at the beginning of a blank line.
-  bool have_blank_line_;
+  bool have_blank_line_{true};
 
   /// Whether console is locked.
-  bool console_locked_;
+  bool console_locked_{false};
 
   /// Buffered current line while console is locked.
   std::string line_buffer_;

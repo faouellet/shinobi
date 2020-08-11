@@ -32,12 +32,12 @@ namespace {
 const char kTestFilename[] = "BuildLogTest-tempfile";
 
 struct BuildLogTest : public StateTestWithBuiltinRules, public BuildLogUser {
-  virtual void SetUp() {
+  void SetUp() override {
     // In case a crashing test left a stale file behind.
     unlink(kTestFilename);
   }
-  virtual void TearDown() { unlink(kTestFilename); }
-  virtual bool IsPathDead(StringPiece s) const { return false; }
+  void TearDown() override { unlink(kTestFilename); }
+  bool IsPathDead(StringPiece  /*s*/) const override { return false; }
 };
 
 TEST_F(BuildLogTest, WriteRead) {
@@ -216,23 +216,23 @@ TEST_F(BuildLogTest, DuplicateVersionHeader) {
 }
 
 struct TestDiskInterface : public DiskInterface {
-  virtual TimeStamp Stat(const std::string& path, std::string* err) const {
+  TimeStamp Stat(const std::string&  /*path*/, std::string*  /*err*/) const override {
     return 4;
   }
-  virtual bool WriteFile(const std::string& path, const std::string& contents) {
+  bool WriteFile(const std::string&  /*path*/, const std::string&  /*contents*/) override {
     assert(false);
     return true;
   }
-  virtual bool MakeDir(const std::string& path) {
+  bool MakeDir(const std::string&  /*path*/) override {
     assert(false);
     return false;
   }
-  virtual Status ReadFile(const std::string& path, std::string* contents,
-                          std::string* err) {
+  Status ReadFile(const std::string&  /*path*/, std::string*  /*contents*/,
+                          std::string*  /*err*/) override {
     assert(false);
     return NotFound;
   }
-  virtual int RemoveFile(const std::string& path) {
+  int RemoveFile(const std::string&  /*path*/) override {
     assert(false);
     return 0;
   }
@@ -259,7 +259,7 @@ TEST_F(BuildLogTest, Restat) {
   e = log.LookupByOutput("out");
   ASSERT_EQ(3, e->mtime);  // unchanged, since the filter doesn't match
 
-  EXPECT_TRUE(log.Restat(kTestFilename, testDiskInterface, 0, NULL, &err));
+  EXPECT_TRUE(log.Restat(kTestFilename, testDiskInterface, 0, nullptr, &err));
   ASSERT_EQ("", err);
   e = log.LookupByOutput("out");
   ASSERT_EQ(4, e->mtime);
@@ -283,7 +283,7 @@ TEST_F(BuildLogTest, VeryLongInputLine) {
   ASSERT_EQ("", err);
 
   BuildLog::LogEntry* e = log.LookupByOutput("out");
-  ASSERT_EQ(NULL, e);
+  ASSERT_EQ(nullptr, e);
 
   e = log.LookupByOutput("out2");
   ASSERT_TRUE(e);
@@ -313,7 +313,7 @@ TEST_F(BuildLogTest, MultiTargetEdge) {
 }
 
 struct BuildLogRecompactTest : public BuildLogTest {
-  virtual bool IsPathDead(StringPiece s) const { return s == "out2"; }
+  bool IsPathDead(StringPiece s) const override { return s == "out2"; }
 };
 
 TEST_F(BuildLogRecompactTest, Recompact) {

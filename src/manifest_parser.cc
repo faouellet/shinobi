@@ -14,9 +14,8 @@
 
 #include "manifest_parser.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-
+#include <cstdio>
+#include <cstdlib>
 #include <vector>
 
 #include "graph.h"
@@ -98,7 +97,7 @@ bool ManifestParser::ParsePool(std::string* err) {
   if (!ExpectToken(Lexer::NEWLINE, err))
     return false;
 
-  if (state_->LookupPool(name) != NULL)
+  if (state_->LookupPool(name) != nullptr)
     return lexer_.Error("duplicate pool '" + name + "'", err);
 
   int depth = -1;
@@ -134,7 +133,7 @@ bool ManifestParser::ParseRule(std::string* err) {
   if (!ExpectToken(Lexer::NEWLINE, err))
     return false;
 
-  if (env_->LookupRuleCurrentScope(name) != NULL)
+  if (env_->LookupRuleCurrentScope(name) != nullptr)
     return lexer_.Error("duplicate rule '" + name + "'", err);
 
   Rule* rule = new Rule(name);  // XXX scoped_ptr
@@ -311,7 +310,7 @@ bool ManifestParser::ParseEdge(std::string* err) {
   std::string pool_name = edge->GetBinding("pool");
   if (!pool_name.empty()) {
     Pool* pool = state_->LookupPool(pool_name);
-    if (pool == NULL)
+    if (pool == nullptr)
       return lexer_.Error("unknown pool name '" + pool_name + "'", err);
     edge->pool_ = pool;
   }
@@ -351,8 +350,8 @@ bool ManifestParser::ParseEdge(std::string* err) {
   edge->implicit_outs_ = implicit_outs;
 
   edge->inputs_.reserve(ins.size());
-  for (std::vector<EvalString>::iterator i = ins.begin(); i != ins.end(); ++i) {
-    std::string path = i->Evaluate(env);
+  for (auto & in : ins) {
+    std::string path = in.Evaluate(env);
     std::string path_err;
     uint64_t slash_bits;
     if (!CanonicalizePath(&path, &slash_bits, &path_err))
@@ -369,7 +368,7 @@ bool ManifestParser::ParseEdge(std::string* err) {
     // build graph but that has since been fixed.  Filter them out to
     // support users of those old CMake versions.
     Node* out = edge->outputs_[0];
-    std::vector<Node*>::iterator new_end =
+    auto new_end =
         remove(edge->inputs_.begin(), edge->inputs_.end(), out);
     if (new_end != edge->inputs_.end()) {
       edge->inputs_.erase(new_end, edge->inputs_.end());
@@ -392,7 +391,7 @@ bool ManifestParser::ParseEdge(std::string* err) {
       return false;
     edge->dyndep_ = state_->GetNode(dyndep, slash_bits);
     edge->dyndep_->set_dyndep_pending(true);
-    std::vector<Node*>::iterator dgi =
+    auto dgi =
         std::find(edge->inputs_.begin(), edge->inputs_.end(), edge->dyndep_);
     if (dgi == edge->inputs_.end()) {
       return lexer_.Error("dyndep '" + dyndep + "' is not an input", err);

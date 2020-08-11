@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <errno.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-
+#include <cerrno>
+#include <climits>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
@@ -154,7 +152,7 @@ struct NinjaMain : public BuildLogUser {
   /// Dump the output requested by '-d stats'.
   void DumpMetrics();
 
-  virtual bool IsPathDead(StringPiece s) const {
+  bool IsPathDead(StringPiece s) const override {
     Node* n = state_.LookupNode(s);
     if (n && n->in_edge())
       return false;
@@ -278,7 +276,7 @@ Node* NinjaMain::CollectTarget(const char* cpath, std::string* err) {
   std::string path = cpath;
   uint64_t slash_bits;
   if (!CanonicalizePath(&path, &slash_bits, err))
-    return NULL;
+    return nullptr;
 
   // Special syntax: "foo.cc^" means "the first output of foo.cc".
   bool first_dependent = false;
@@ -292,7 +290,7 @@ Node* NinjaMain::CollectTarget(const char* cpath, std::string* err) {
     if (first_dependent) {
       if (node->out_edges().empty()) {
         *err = "'" + path + "' has no out edge";
-        return NULL;
+        return nullptr;
       }
       Edge* edge = node->out_edges()[0];
       if (edge->outputs_.empty()) {
@@ -315,7 +313,7 @@ Node* NinjaMain::CollectTarget(const char* cpath, std::string* err) {
         *err += ", did you mean '" + suggestion->path() + "'?";
       }
     }
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -329,14 +327,14 @@ bool NinjaMain::CollectTargetsFromArgs(int argc, char* argv[],
 
   for (int i = 0; i < argc; ++i) {
     Node* node = CollectTarget(argv[i], err);
-    if (node == NULL)
+    if (node == nullptr)
       return false;
     targets->push_back(node);
   }
   return true;
 }
 
-int NinjaMain::ToolGraph(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolGraph(const Options* /*options*/, int argc, char* argv[]) {
   std::vector<Node*> nodes;
   std::string err;
   if (!CollectTargetsFromArgs(argc, argv, &nodes, &err)) {
@@ -346,15 +344,14 @@ int NinjaMain::ToolGraph(const Options* options, int argc, char* argv[]) {
 
   GraphViz graph(&state_, &disk_interface_);
   graph.Start();
-  for (std::vector<Node*>::const_iterator n = nodes.begin(); n != nodes.end();
-       ++n)
-    graph.AddTarget(*n);
+  for (auto node : nodes)
+    graph.AddTarget(node);
   graph.Finish();
 
   return 0;
 }
 
-int NinjaMain::ToolQuery(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolQuery(const Options* /*options*/, int argc, char* argv[]) {
   if (argc == 0) {
     Error("expected a target to query");
     return 1;
@@ -388,10 +385,9 @@ int NinjaMain::ToolQuery(const Options* options, int argc, char* argv[]) {
       }
     }
     printf("  outputs:\n");
-    for (std::vector<Edge*>::const_iterator edge = node->out_edges().begin();
-         edge != node->out_edges().end(); ++edge) {
-      for (std::vector<Node*>::iterator out = (*edge)->outputs_.begin();
-           out != (*edge)->outputs_.end(); ++out) {
+    for (auto edge : node->out_edges()) {
+      for (auto out = edge->outputs_.begin(); out != edge->outputs_.end();
+           ++out) {
         printf("    %s\n", (*out)->path().c_str());
       }
     }
@@ -424,15 +420,14 @@ int NinjaMain::ToolMSVC(const Options* options, int argc, char* argv[]) {
 #endif
 
 int ToolTargetsList(const std::vector<Node*>& nodes, int depth, int indent) {
-  for (std::vector<Node*>::const_iterator n = nodes.begin(); n != nodes.end();
-       ++n) {
+  for (auto node : nodes) {
     for (int i = 0; i < indent; ++i)
       printf("  ");
-    const char* target = (*n)->path().c_str();
-    if ((*n)->in_edge()) {
-      printf("%s: %s\n", target, (*n)->in_edge()->rule_->name().c_str());
+    const char* target = node->path().c_str();
+    if (node->in_edge()) {
+      printf("%s: %s\n", target, node->in_edge()->rule_->name().c_str());
       if (depth > 1 || depth <= 0)
-        ToolTargetsList((*n)->in_edge()->inputs_, depth - 1, indent + 1);
+        ToolTargetsList(node->in_edge()->inputs_, depth - 1, indent + 1);
     } else {
       printf("%s\n", target);
     }
@@ -441,10 +436,9 @@ int ToolTargetsList(const std::vector<Node*>& nodes, int depth, int indent) {
 }
 
 int ToolTargetsSourceList(State* state) {
-  for (std::vector<Edge*>::iterator e = state->edges_.begin();
-       e != state->edges_.end(); ++e) {
-    for (std::vector<Node*>::iterator inps = (*e)->inputs_.begin();
-         inps != (*e)->inputs_.end(); ++inps) {
+  for (auto& edge : state->edges_) {
+    for (auto inps = edge->inputs_.begin(); inps != edge->inputs_.end();
+         ++inps) {
       if (!(*inps)->in_edge())
         printf("%s\n", (*inps)->path().c_str());
     }
@@ -456,42 +450,39 @@ int ToolTargetsList(State* state, const std::string& rule_name) {
   std::set<std::string> rules;
 
   // Gather the outputs.
-  for (std::vector<Edge*>::iterator e = state->edges_.begin();
-       e != state->edges_.end(); ++e) {
-    if ((*e)->rule_->name() == rule_name) {
-      for (std::vector<Node*>::iterator out_node = (*e)->outputs_.begin();
-           out_node != (*e)->outputs_.end(); ++out_node) {
+  for (auto& edge : state->edges_) {
+    if (edge->rule_->name() == rule_name) {
+      for (auto out_node = edge->outputs_.begin();
+           out_node != edge->outputs_.end(); ++out_node) {
         rules.insert((*out_node)->path());
       }
     }
   }
 
   // Print them.
-  for (std::set<std::string>::const_iterator i = rules.begin();
-       i != rules.end(); ++i) {
-    printf("%s\n", (*i).c_str());
+  for (const auto& rule : rules) {
+    printf("%s\n", rule.c_str());
   }
 
   return 0;
 }
 
 int ToolTargetsList(State* state) {
-  for (std::vector<Edge*>::iterator e = state->edges_.begin();
-       e != state->edges_.end(); ++e) {
-    for (std::vector<Node*>::iterator out_node = (*e)->outputs_.begin();
-         out_node != (*e)->outputs_.end(); ++out_node) {
+  for (auto& edge : state->edges_) {
+    for (auto out_node = edge->outputs_.begin();
+         out_node != edge->outputs_.end(); ++out_node) {
       printf("%s: %s\n", (*out_node)->path().c_str(),
-             (*e)->rule_->name().c_str());
+             edge->rule_->name().c_str());
     }
   }
   return 0;
 }
 
-int NinjaMain::ToolDeps(const Options* options, int argc, char** argv) {
+int NinjaMain::ToolDeps(const Options* /*options*/, int argc, char** argv) {
   std::vector<Node*> nodes;
   if (argc == 0) {
-    for (std::vector<Node*>::const_iterator ni = deps_log_.nodes().begin();
-         ni != deps_log_.nodes().end(); ++ni) {
+    for (auto ni = deps_log_.nodes().begin(); ni != deps_log_.nodes().end();
+         ++ni) {
       if (deps_log_.IsDepsEntryLiveFor(*ni))
         nodes.push_back(*ni);
     }
@@ -504,19 +495,18 @@ int NinjaMain::ToolDeps(const Options* options, int argc, char** argv) {
   }
 
   RealDiskInterface disk_interface;
-  for (std::vector<Node*>::iterator it = nodes.begin(), end = nodes.end();
-       it != end; ++it) {
-    DepsLog::Deps* deps = deps_log_.GetDeps(*it);
+  for (auto& node : nodes) {
+    DepsLog::Deps* deps = deps_log_.GetDeps(node);
     if (!deps) {
-      printf("%s: deps not found\n", (*it)->path().c_str());
+      printf("%s: deps not found\n", node->path().c_str());
       continue;
     }
 
     std::string err;
-    TimeStamp mtime = disk_interface.Stat((*it)->path(), &err);
+    TimeStamp mtime = disk_interface.Stat(node->path(), &err);
     if (mtime == -1)
       Error("%s", err.c_str());  // Log and ignore Stat() errors;
-    printf("%s: #deps %d, deps mtime %" PRId64 " (%s)\n", (*it)->path().c_str(),
+    printf("%s: #deps %d, deps mtime %" PRId64 " (%s)\n", node->path().c_str(),
            deps->node_count, deps->mtime,
            (!mtime || mtime > deps->mtime ? "STALE" : "VALID"));
     for (int i = 0; i < deps->node_count; ++i)
@@ -527,7 +517,7 @@ int NinjaMain::ToolDeps(const Options* options, int argc, char** argv) {
   return 0;
 }
 
-int NinjaMain::ToolTargets(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolTargets(const Options* /*options*/, int argc, char* argv[]) {
   int depth = 1;
   if (argc >= 1) {
     std::string mode = argv[0];
@@ -567,7 +557,7 @@ int NinjaMain::ToolTargets(const Options* options, int argc, char* argv[]) {
   }
 }
 
-int NinjaMain::ToolRules(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolRules(const Options* /*options*/, int argc, char* argv[]) {
   // Parse options.
 
   // The rules tool uses getopt, and expects argv[0] to contain the name of
@@ -600,14 +590,14 @@ int NinjaMain::ToolRules(const Options* options, int argc, char* argv[]) {
 
   // Print rules
 
-  typedef std::map<std::string, const Rule*> Rules;
+  using Rules = std::map<std::string, const Rule*>;
   const Rules& rules = state_.bindings_.GetRules();
-  for (Rules::const_iterator i = rules.begin(); i != rules.end(); ++i) {
-    printf("%s", i->first.c_str());
+  for (const auto& i : rules) {
+    printf("%s", i.first.c_str());
     if (print_description) {
-      const Rule* rule = i->second;
+      const Rule* rule = i.second;
       const EvalString* description = rule->GetBinding("description");
-      if (description != NULL) {
+      if (description != nullptr) {
         printf(": %s", description->Unparse().c_str());
       }
     }
@@ -624,16 +614,16 @@ void PrintCommands(Edge* edge, std::set<Edge*>* seen, PrintCommandMode mode) {
     return;
 
   if (mode == PCM_All) {
-    for (std::vector<Node*>::iterator in = edge->inputs_.begin();
-         in != edge->inputs_.end(); ++in)
-      PrintCommands((*in)->in_edge(), seen, mode);
+    for (auto& input : edge->inputs_)
+      PrintCommands(input->in_edge(), seen, mode);
   }
 
   if (!edge->is_phony())
     puts(edge->EvaluateCommand().c_str());
 }
 
-int NinjaMain::ToolCommands(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolCommands(const Options* /*options*/, int argc,
+                            char* argv[]) {
   // The clean tool uses getopt, and expects argv[0] to contain the name of
   // the tool, i.e. "commands".
   ++argc;
@@ -670,13 +660,13 @@ int NinjaMain::ToolCommands(const Options* options, int argc, char* argv[]) {
   }
 
   std::set<Edge*> seen;
-  for (std::vector<Node*>::iterator in = nodes.begin(); in != nodes.end(); ++in)
-    PrintCommands((*in)->in_edge(), &seen, mode);
+  for (auto& node : nodes)
+    PrintCommands(node->in_edge(), &seen, mode);
 
   return 0;
 }
 
-int NinjaMain::ToolClean(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolClean(const Options* /*options*/, int argc, char* argv[]) {
   // The clean tool uses getopt, and expects argv[0] to contain the name of
   // the tool, i.e. "clean".
   argc++;
@@ -725,7 +715,8 @@ int NinjaMain::ToolClean(const Options* options, int argc, char* argv[]) {
   }
 }
 
-int NinjaMain::ToolCleanDead(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolCleanDead(const Options* /*options*/, int /*argc*/,
+                             char* /*argv*/[]) {
   Cleaner cleaner(&state_, config_, &disk_interface_);
   return cleaner.CleanDead(build_log_.entries());
 }
@@ -778,7 +769,7 @@ void printCompdb(const char* const directory, const Edge* const edge,
   printf("\"\n  }");
 }
 
-int NinjaMain::ToolCompilationDatabase(const Options* options, int argc,
+int NinjaMain::ToolCompilationDatabase(const Options* /*options*/, int argc,
                                        char* argv[]) {
   // The compdb tool uses getopt, and expects argv[0] to contain the name of
   // the tool, i.e. "compdb".
@@ -810,7 +801,7 @@ int NinjaMain::ToolCompilationDatabase(const Options* options, int argc,
 
   bool first = true;
   std::vector<char> cwd;
-  char* success = NULL;
+  char* success = nullptr;
 
   do {
     cwd.resize(cwd.size() + 1024);
@@ -823,23 +814,22 @@ int NinjaMain::ToolCompilationDatabase(const Options* options, int argc,
   }
 
   putchar('[');
-  for (std::vector<Edge*>::iterator e = state_.edges_.begin();
-       e != state_.edges_.end(); ++e) {
-    if ((*e)->inputs_.empty())
+  for (auto& edge : state_.edges_) {
+    if (edge->inputs_.empty())
       continue;
     if (argc == 0) {
       if (!first) {
         putchar(',');
       }
-      printCompdb(&cwd[0], *e, eval_mode);
+      printCompdb(&cwd[0], edge, eval_mode);
       first = false;
     } else {
       for (int i = 0; i != argc; ++i) {
-        if ((*e)->rule_->name() == argv[i]) {
+        if (edge->rule_->name() == argv[i]) {
           if (!first) {
             putchar(',');
           }
-          printCompdb(&cwd[0], *e, eval_mode);
+          printCompdb(&cwd[0], edge, eval_mode);
           first = false;
         }
       }
@@ -850,7 +840,8 @@ int NinjaMain::ToolCompilationDatabase(const Options* options, int argc,
   return 0;
 }
 
-int NinjaMain::ToolRecompact(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolRecompact(const Options* /*options*/, int /*argc*/,
+                             char* /*argv*/[]) {
   if (!EnsureBuildDirExists())
     return 1;
 
@@ -861,7 +852,7 @@ int NinjaMain::ToolRecompact(const Options* options, int argc, char* argv[]) {
   return 0;
 }
 
-int NinjaMain::ToolRestat(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolRestat(const Options* /*options*/, int argc, char* argv[]) {
   // The restat tool uses getopt, and expects argv[0] to contain the name of the
   // tool, i.e. "restat"
   argc++;
@@ -919,7 +910,8 @@ int NinjaMain::ToolRestat(const Options* options, int argc, char* argv[]) {
   return EXIT_SUCCESS;
 }
 
-int NinjaMain::ToolUrtle(const Options* options, int argc, char** argv) {
+int NinjaMain::ToolUrtle(const Options* /*options*/, int /*argc*/,
+                         char** /*argv*/) {
   // RLE encoded.
   const char* urtle =
       " 13 ,3;2!2;\n8 ,;<11!;\n5 `'<10!(2`'2!\n11 ,6;, `\\. `\\9 .,c13$ec,.\n6 "
@@ -977,8 +969,8 @@ const Tool* ChooseTool(const std::string& tool_name) {
     { "cleandead",
       "clean built files that are no longer produced by the manifest",
       Tool::RUN_AFTER_LOGS, &NinjaMain::ToolCleanDead },
-    { "urtle", NULL, Tool::RUN_AFTER_FLAGS, &NinjaMain::ToolUrtle },
-    { NULL, NULL, Tool::RUN_AFTER_FLAGS, NULL }
+    { "urtle", nullptr, Tool::RUN_AFTER_FLAGS, &NinjaMain::ToolUrtle },
+    { nullptr, nullptr, Tool::RUN_AFTER_FLAGS, nullptr }
   };
 
   if (tool_name == "list") {
@@ -987,7 +979,7 @@ const Tool* ChooseTool(const std::string& tool_name) {
       if (tool->desc)
         printf("%10s  %s\n", tool->name, tool->desc);
     }
-    return NULL;
+    return nullptr;
   }
 
   for (const Tool* tool = &kTools[0]; tool->name; ++tool) {
@@ -1005,7 +997,7 @@ const Tool* ChooseTool(const std::string& tool_name) {
   } else {
     Fatal("unknown tool '%s'", tool_name.c_str());
   }
-  return NULL;  // Not reached.
+  return nullptr;  // Not reached.
 }
 
 /// Enable a debugging mode.  Returns false if Ninja should exit instead
@@ -1199,8 +1191,8 @@ int NinjaMain::RunBuild(int argc, char** argv) {
   disk_interface_.AllowStatCache(g_experimental_statcache);
 
   Builder builder(&state_, config_, &build_log_, &deps_log_, &disk_interface_);
-  for (size_t i = 0; i < targets.size(); ++i) {
-    if (!builder.AddTarget(targets[i], &err)) {
+  for (auto& target : targets) {
+    if (!builder.AddTarget(target, &err)) {
       if (!err.empty()) {
         Error("%s", err.c_str());
         return 1;
@@ -1259,15 +1251,16 @@ int ReadFlags(int* argc, char*** argv, Options* options, BuildConfig* config) {
   config->parallelism = GuessParallelism();
 
   enum { OPT_VERSION = 1 };
-  const option kLongOptions[] = { { "help", no_argument, NULL, 'h' },
-                                  { "version", no_argument, NULL, OPT_VERSION },
-                                  { "verbose", no_argument, NULL, 'v' },
-                                  { NULL, 0, NULL, 0 } };
+  const option kLongOptions[] = { { "help", no_argument, nullptr, 'h' },
+                                  { "version", no_argument, nullptr,
+                                    OPT_VERSION },
+                                  { "verbose", no_argument, nullptr, 'v' },
+                                  { nullptr, 0, nullptr, 0 } };
 
   int opt;
   while (!options->tool &&
          (opt = getopt_long(*argc, *argv, "d:f:j:k:l:nt:vw:C:h", kLongOptions,
-                            NULL)) != -1) {
+                            nullptr)) != -1) {
     switch (opt) {
     case 'd':
       if (!DebugEnable(optarg))
@@ -1348,7 +1341,7 @@ NORETURN void real_main(int argc, char** argv) {
   options.input_file = "build.ninja";
   options.dupe_edges_should_err = true;
 
-  std::setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
+  std::setvbuf(stdout, nullptr, _IOLBF, BUFSIZ);
   const char* ninja_command = argv[0];
 
   int exit_code = ReadFlags(&argc, &argv, &options, &config);

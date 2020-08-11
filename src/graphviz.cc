@@ -14,9 +14,8 @@
 
 #include "graphviz.h"
 
-#include <stdio.h>
-
 #include <algorithm>
+#include <cstdio>
 
 #include "dyndep.h"
 #include "graph.h"
@@ -58,11 +57,11 @@ void GraphViz::AddTarget(Node* node) {
   } else {
     printf("\"%p\" [label=\"%s\", shape=ellipse]\n", edge,
            edge->rule_->name().c_str());
-    for (std::vector<Node*>::iterator out = edge->outputs_.begin();
+    for (auto out = edge->outputs_.begin();
          out != edge->outputs_.end(); ++out) {
       printf("\"%p\" -> \"%p\"\n", edge, *out);
     }
-    for (std::vector<Node*>::iterator in = edge->inputs_.begin();
+    for (auto in = edge->inputs_.begin();
          in != edge->inputs_.end(); ++in) {
       const char* order_only = "";
       if (edge->is_order_only(in - edge->inputs_.begin()))
@@ -71,9 +70,8 @@ void GraphViz::AddTarget(Node* node) {
     }
   }
 
-  for (std::vector<Node*>::iterator in = edge->inputs_.begin();
-       in != edge->inputs_.end(); ++in) {
-    AddTarget(*in);
+  for (auto & input : edge->inputs_) {
+    AddTarget(input);
   }
 }
 

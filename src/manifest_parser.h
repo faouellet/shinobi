@@ -32,10 +32,10 @@ enum PhonyCycleAction {
 
 struct ManifestParserOptions {
   ManifestParserOptions()
-      : dupe_edge_action_(kDupeEdgeActionWarn),
-        phony_cycle_action_(kPhonyCycleActionWarn) {}
-  DupeEdgeAction dupe_edge_action_;
-  PhonyCycleAction phony_cycle_action_;
+      
+        = default;
+  DupeEdgeAction dupe_edge_action_{kDupeEdgeActionWarn};
+  PhonyCycleAction phony_cycle_action_{kPhonyCycleActionWarn};
 };
 
 /// Parses .ninja files.
@@ -51,7 +51,7 @@ struct ManifestParser : public Parser {
 
 private:
   /// Parse a file, given its contents as a std::string.
-  bool Parse(const std::string& filename, const std::string& input, std::string* err);
+  bool Parse(const std::string& filename, const std::string& input, std::string* err) override;
 
   /// Parse various statement types.
   bool ParsePool(std::string* err);

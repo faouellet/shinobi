@@ -18,6 +18,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "eval_env.h"
@@ -37,8 +38,8 @@ struct Rule;
 /// the total scheduled weight diminishes enough (i.e. when a scheduled edge
 /// completes).
 struct Pool {
-  Pool(const std::string& name, int depth)
-      : name_(name), current_use_(0), depth_(depth),
+  Pool(std::string  name, int depth)
+      : name_(std::move(name)), current_use_(0), depth_(depth),
         delayed_(&WeightedEdgeCmp) {}
 
   // A depth of 0 is infinite
@@ -77,7 +78,7 @@ struct Pool {
 
   static bool WeightedEdgeCmp(const Edge* a, const Edge* b);
 
-  typedef std::set<Edge*, bool (*)(const Edge*, const Edge*)> DelayedEdges;
+  using DelayedEdges = std::set<Edge *, bool (*)(const Edge *, const Edge *)>;
   DelayedEdges delayed_;
 };
 
@@ -115,7 +116,7 @@ struct State {
   std::vector<Node*> DefaultNodes(std::string* error) const;
 
   /// Mapping of path -> Node.
-  typedef ExternalStringHashMap<Node*>::Type Paths;
+  using Paths = ExternalStringHashMap<Node *>::Type;
   Paths paths_;
 
   /// All the pools used in the graph.

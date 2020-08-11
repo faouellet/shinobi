@@ -28,11 +28,11 @@
 // sstream, which slows down building ninja_test almost 20%.
 namespace testing {
 class Test {
-  bool failed_;
-  int assertion_failures_;
+  bool failed_{false};
+  int assertion_failures_{0};
  public:
-  Test() : failed_(false), assertion_failures_(0) {}
-  virtual ~Test() {}
+  Test()  = default;
+  virtual ~Test() = default;
   virtual void SetUp() {}
   virtual void TearDown() {}
   virtual void Run() = 0;
@@ -115,7 +115,7 @@ struct StateTestWithBuiltinRules : public testing::Test {
 
   /// Add a "cat" rule to \a state.  Used by some tests; it's
   /// otherwise done by the ctor to state_.
-  void AddCatRule(State* state);
+  static void AddCatRule(State* state);
 
   /// Short way to get a Node by its path from state_.
   Node* GetNode(const std::string& path);
@@ -132,7 +132,7 @@ void VerifyGraph(const State& state);
 /// of disk state.  It also logs file accesses and directory creations
 /// so it can be used by tests to verify disk access patterns.
 struct VirtualFileSystem : public DiskInterface {
-  VirtualFileSystem() : now_(1) {}
+  VirtualFileSystem()  = default;
 
   /// "Create" a file with contents.
   void Create(const std::string& path, const std::string& contents);
@@ -144,11 +144,11 @@ struct VirtualFileSystem : public DiskInterface {
   }
 
   // DiskInterface
-  virtual TimeStamp Stat(const std::string& path, std::string* err) const;
-  virtual bool WriteFile(const std::string& path, const std::string& contents);
-  virtual bool MakeDir(const std::string& path);
-  virtual Status ReadFile(const std::string& path, std::string* contents, std::string* err);
-  virtual int RemoveFile(const std::string& path);
+  TimeStamp Stat(const std::string& path, std::string* err) const override;
+  bool WriteFile(const std::string& path, const std::string& contents) override;
+  bool MakeDir(const std::string& path) override;
+  Status ReadFile(const std::string& path, std::string* contents, std::string* err) override;
+  int RemoveFile(const std::string& path) override;
 
   /// An entry for a single in-memory file.
   struct Entry {
@@ -159,13 +159,13 @@ struct VirtualFileSystem : public DiskInterface {
 
   std::vector<std::string> directories_made_;
   std::vector<std::string> files_read_;
-  typedef std::map<std::string, Entry> FileMap;
+  using FileMap = std::map<std::string, Entry>;
   FileMap files_;
   std::set<std::string> files_removed_;
   std::set<std::string> files_created_;
 
   /// A simple fake timestamp for file operations.
-  int now_;
+  int now_{1};
 };
 
 struct ScopedTempDir {

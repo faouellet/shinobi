@@ -14,8 +14,8 @@
 
 #include "line_printer.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #ifdef _WIN32
 #include <windows.h>
 #ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
@@ -30,7 +30,7 @@
 
 #include "util.h"
 
-LinePrinter::LinePrinter() : have_blank_line_(true), console_locked_(false) {
+LinePrinter::LinePrinter()  {
   const char* term = getenv("TERM");
 #ifndef _WIN32
   smart_terminal_ = isatty(1) && term && std::string(term) != "dumb";

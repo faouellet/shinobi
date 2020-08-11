@@ -28,9 +28,9 @@ struct State;
 struct GraphViz {
   GraphViz(State* state, DiskInterface* disk_interface)
       : dyndep_loader_(state, disk_interface) {}
-  void Start();
+  static void Start();
   void AddTarget(Node* node);
-  void Finish();
+  static void Finish();
 
   DyndepLoader dyndep_loader_;
   std::set<Node*> visited_nodes_;

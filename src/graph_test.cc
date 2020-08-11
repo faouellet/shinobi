@@ -18,7 +18,7 @@
 #include "test.h"
 
 struct GraphTest : public StateTestWithBuiltinRules {
-  GraphTest() : scan_(&state_, NULL, NULL, &fs_, NULL) {}
+  GraphTest() : scan_(&state_, nullptr, nullptr, &fs_, nullptr) {}
 
   VirtualFileSystem fs_;
   DependencyScan scan_;
@@ -205,8 +205,8 @@ TEST_F(GraphTest, RootNodes) {
   std::string err;
   std::vector<Node*> root_nodes = state_.RootNodes(&err);
   EXPECT_EQ(4u, root_nodes.size());
-  for (size_t i = 0; i < root_nodes.size(); ++i) {
-    std::string name = root_nodes[i]->path();
+  for (auto & root_node : root_nodes) {
+    std::string name = root_node->path();
     EXPECT_EQ("out", name.substr(0, 3));
   }
 }

@@ -14,9 +14,8 @@
 
 #include "clparser.h"
 
-#include <assert.h>
-
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 
 #include "metrics.h"

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include "depfile_parser.h"
 #include "metrics.h"
@@ -61,12 +61,12 @@ int main(int argc, char* argv[]) {
     float min = times[0];
     float max = times[0];
     float total = 0;
-    for (size_t i = 0; i < times.size(); ++i) {
-      total += times[i];
-      if (times[i] < min)
-        min = times[i];
-      else if (times[i] > max)
-        max = times[i];
+    for (float time : times) {
+      total += time;
+      if (time < min)
+        min = time;
+      else if (time > max)
+        max = time;
     }
 
     printf("min %.1fus  max %.1fus  avg %.1fus\n", min, max,

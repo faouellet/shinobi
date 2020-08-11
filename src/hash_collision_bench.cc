@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdlib.h>
-#include <time.h>
-
 #include <algorithm>
+#include <cstdlib>
+#include <ctime>
 
 #include "build_log.h"
 
@@ -35,9 +34,9 @@ int main() {
 
   // Leak these, else 10% of the runtime is spent destroying std::strings.
   char** commands = new char*[N];
-  std::pair<uint64_t, int>* hashes = new std::pair<uint64_t, int>[N];
+  auto* hashes = new std::pair<uint64_t, int>[N];
 
-  srand((int)time(NULL));
+  srand((int)time(nullptr));
 
   for (int i = 0; i < N; ++i) {
     RandomCommand(&commands[i]);

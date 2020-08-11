@@ -28,7 +28,7 @@
 
 #include "util.h"
 
-Metrics* g_metrics = NULL;
+Metrics* g_metrics = nullptr;
 
 namespace {
 
@@ -36,7 +36,7 @@ namespace {
 /// Compute a platform-specific high-res timer value that fits into an int64.
 int64_t HighResTimer() {
   timeval tv;
-  if (gettimeofday(&tv, NULL) < 0)
+  if (gettimeofday(&tv, nullptr) < 0)
     Fatal("gettimeofday: %s", strerror(errno));
   return (int64_t)tv.tv_sec * 1000 * 1000 + tv.tv_usec;
 }
@@ -89,7 +89,7 @@ ScopedMetric::~ScopedMetric() {
 }
 
 Metric* Metrics::NewMetric(const std::string& name) {
-  Metric* metric = new Metric;
+  auto* metric = new Metric;
   metric->name = name;
   metric->count = 0;
   metric->sum = 0;
@@ -99,16 +99,13 @@ Metric* Metrics::NewMetric(const std::string& name) {
 
 void Metrics::Report() {
   int width = 0;
-  for (std::vector<Metric*>::iterator i = metrics_.begin(); i != metrics_.end();
-       ++i) {
-    width = std::max((int)(*i)->name.size(), width);
+  for (auto & metric : metrics_) {
+    width = std::max((int)metric->name.size(), width);
   }
 
   printf("%-*s\t%-6s\t%-9s\t%s\n", width, "metric", "count", "avg (us)",
          "total (ms)");
-  for (std::vector<Metric*>::iterator i = metrics_.begin(); i != metrics_.end();
-       ++i) {
-    Metric* metric = *i;
+  for (auto metric : metrics_) {
     double total = metric->sum / (double)1000;
     double avg = metric->sum / (double)metric->count;
     printf("%-*s\t%-6d\t%-8.1f\t%.1f\n", width, metric->name.c_str(),
@@ -116,7 +113,7 @@ void Metrics::Report() {
   }
 }
 
-uint64_t Stopwatch::Now() const {
+uint64_t Stopwatch::Now() {
   return TimerToMicros(HighResTimer());
 }
 

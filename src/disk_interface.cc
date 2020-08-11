@@ -14,12 +14,12 @@
 
 #include "disk_interface.h"
 
-#include <errno.h>
-#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include <algorithm>
+#include <cerrno>
+#include <cstdio>
 #include <cstring>
 
 #ifdef _WIN32
@@ -222,7 +222,7 @@ TimeStamp RealDiskInterface::Stat(const std::string& path,
 bool RealDiskInterface::WriteFile(const std::string& path,
                                   const std::string& contents) {
   FILE* fp = fopen(path.c_str(), "w");
-  if (fp == NULL) {
+  if (fp == nullptr) {
     Error("WriteFile(%s): Unable to create file. %s", path.c_str(),
           strerror(errno));
     return false;

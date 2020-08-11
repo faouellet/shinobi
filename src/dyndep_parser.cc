@@ -104,7 +104,7 @@ bool DyndepParser::ParseLet(std::string* key, EvalString* value,
 bool DyndepParser::ParseEdge(std::string* err) {
   // Parse one explicit output.  We expect it to already have an edge.
   // We will record its dynamically-discovered dependency information.
-  Dyndeps* dyndeps = NULL;
+  Dyndeps* dyndeps = nullptr;
   {
     EvalString out0;
     if (!lexer_.ReadPath(&out0, err))
@@ -198,8 +198,8 @@ bool DyndepParser::ParseEdge(std::string* err) {
   }
 
   dyndeps->implicit_inputs_.reserve(ins.size());
-  for (std::vector<EvalString>::iterator i = ins.begin(); i != ins.end(); ++i) {
-    std::string path = i->Evaluate(&env_);
+  for (auto & in : ins) {
+    std::string path = in.Evaluate(&env_);
     std::string path_err;
     uint64_t slash_bits;
     if (!CanonicalizePath(&path, &slash_bits, &path_err))
@@ -209,9 +209,8 @@ bool DyndepParser::ParseEdge(std::string* err) {
   }
 
   dyndeps->implicit_outputs_.reserve(outs.size());
-  for (std::vector<EvalString>::iterator i = outs.begin(); i != outs.end();
-       ++i) {
-    std::string path = i->Evaluate(&env_);
+  for (auto & out : outs) {
+    std::string path = out.Evaluate(&env_);
     std::string path_err;
     uint64_t slash_bits;
     if (!CanonicalizePath(&path, &slash_bits, &path_err))

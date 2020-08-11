@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include "build_log.h"
 #include "graph.h"
@@ -29,7 +29,7 @@
 const char kTestFilename[] = "BuildLogPerfTest-tempfile";
 
 struct NoDeadPaths : public BuildLogUser {
-  virtual bool IsPathDead(StringPiece) const { return false; }
+  bool IsPathDead(StringPiece) const override { return false; }
 };
 
 bool WriteTestData(std::string* err) {
@@ -71,7 +71,7 @@ bool WriteTestData(std::string* err) {
   long_rule_command += "$in -o $out\n";
 
   State state;
-  ManifestParser parser(&state, NULL);
+  ManifestParser parser(&state, nullptr);
   if (!parser.ParseTest("rule cxx\n  command = " + long_rule_command, err))
     return false;
 
@@ -131,12 +131,12 @@ int main() {
   int min = times[0];
   int max = times[0];
   float total = 0;
-  for (size_t i = 0; i < times.size(); ++i) {
-    total += times[i];
-    if (times[i] < min)
-      min = times[i];
-    else if (times[i] > max)
-      max = times[i];
+  for (int time : times) {
+    total += time;
+    if (time < min)
+      min = time;
+    else if (time > max)
+      max = time;
   }
 
   printf("min %dms  max %dms  avg %.1fms\n", min, max, total / times.size());

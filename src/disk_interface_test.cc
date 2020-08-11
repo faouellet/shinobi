@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <assert.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdio>
 #ifdef _WIN32
 #include <io.h>
 #include <windows.h>
@@ -26,14 +26,14 @@
 namespace {
 
 struct DiskInterfaceTest : public testing::Test {
-  virtual void SetUp() {
+  void SetUp() override {
     // These tests do real disk accesses, so create a temp dir.
     temp_dir_.CreateAndEnter("Ninja-DiskInterfaceTest");
   }
 
-  virtual void TearDown() { temp_dir_.Cleanup(); }
+  void TearDown() override { temp_dir_.Cleanup(); }
 
-  bool Touch(const char* path) {
+  static bool Touch(const char* path) {
     FILE* f = fopen(path, "w");
     if (!f)
       return false;
@@ -209,24 +209,24 @@ TEST_F(DiskInterfaceTest, RemoveFile) {
 }
 
 struct StatTest : public StateTestWithBuiltinRules, public DiskInterface {
-  StatTest() : scan_(&state_, NULL, NULL, this, NULL) {}
+  StatTest() : scan_(&state_, nullptr, nullptr, this, nullptr) {}
 
   // DiskInterface implementation.
-  virtual TimeStamp Stat(const std::string& path, std::string* err) const;
-  virtual bool WriteFile(const std::string& path, const std::string& contents) {
+  TimeStamp Stat(const std::string& path, std::string* err) const override;
+  bool WriteFile(const std::string&  /*path*/, const std::string&  /*contents*/) override {
     assert(false);
     return true;
   }
-  virtual bool MakeDir(const std::string& path) {
+  bool MakeDir(const std::string&  /*path*/) override {
     assert(false);
     return false;
   }
-  virtual Status ReadFile(const std::string& path, std::string* contents,
-                          std::string* err) {
+  Status ReadFile(const std::string&  /*path*/, std::string*  /*contents*/,
+                          std::string*  /*err*/) override {
     assert(false);
     return NotFound;
   }
-  virtual int RemoveFile(const std::string& path) {
+  int RemoveFile(const std::string&  /*path*/) override {
     assert(false);
     return 0;
   }
@@ -236,9 +236,9 @@ struct StatTest : public StateTestWithBuiltinRules, public DiskInterface {
   mutable std::vector<std::string> stats_;
 };
 
-TimeStamp StatTest::Stat(const std::string& path, std::string* err) const {
+TimeStamp StatTest::Stat(const std::string& path, std::string*  /*err*/) const {
   stats_.push_back(path);
-  std::map<std::string, TimeStamp>::const_iterator i = mtimes_.find(path);
+  auto i = mtimes_.find(path);
   if (i == mtimes_.end())
     return 0;  // File not found.
   return i->second;
@@ -252,7 +252,7 @@ TEST_F(StatTest, Simple) {
   EXPECT_TRUE(out->Stat(this, &err));
   EXPECT_EQ("", err);
   ASSERT_EQ(1u, stats_.size());
-  scan_.RecomputeDirty(out, NULL);
+  scan_.RecomputeDirty(out, nullptr);
   ASSERT_EQ(2u, stats_.size());
   ASSERT_EQ("out", stats_[0]);
   ASSERT_EQ("in", stats_[1]);
@@ -268,7 +268,7 @@ TEST_F(StatTest, TwoStep) {
   EXPECT_TRUE(out->Stat(this, &err));
   EXPECT_EQ("", err);
   ASSERT_EQ(1u, stats_.size());
-  scan_.RecomputeDirty(out, NULL);
+  scan_.RecomputeDirty(out, nullptr);
   ASSERT_EQ(3u, stats_.size());
   ASSERT_EQ("out", stats_[0]);
   ASSERT_TRUE(GetNode("out")->dirty());
@@ -288,7 +288,7 @@ TEST_F(StatTest, Tree) {
   EXPECT_TRUE(out->Stat(this, &err));
   EXPECT_EQ("", err);
   ASSERT_EQ(1u, stats_.size());
-  scan_.RecomputeDirty(out, NULL);
+  scan_.RecomputeDirty(out, nullptr);
   ASSERT_EQ(1u + 6u, stats_.size());
   ASSERT_EQ("mid1", stats_[1]);
   ASSERT_TRUE(GetNode("mid1")->dirty());
@@ -309,7 +309,7 @@ TEST_F(StatTest, Middle) {
   EXPECT_TRUE(out->Stat(this, &err));
   EXPECT_EQ("", err);
   ASSERT_EQ(1u, stats_.size());
-  scan_.RecomputeDirty(out, NULL);
+  scan_.RecomputeDirty(out, nullptr);
   ASSERT_FALSE(GetNode("in")->dirty());
   ASSERT_TRUE(GetNode("mid")->dirty());
   ASSERT_TRUE(GetNode("out")->dirty());

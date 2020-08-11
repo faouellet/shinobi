@@ -14,8 +14,8 @@
 
 #include "clean.h"
 
-#include <assert.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdio>
 
 #include "disk_interface.h"
 #include "graph.h"
@@ -63,7 +63,7 @@ void Cleaner::Remove(const std::string& path) {
 }
 
 bool Cleaner::IsAlreadyRemoved(const std::string& path) {
-  std::set<std::string>::iterator i = removed_.find(path);
+  auto i = removed_.find(path);
   return (i != removed_.end());
 }
 
@@ -98,20 +98,19 @@ int Cleaner::CleanAll(bool generator) {
   Reset();
   PrintHeader();
   LoadDyndeps();
-  for (std::vector<Edge*>::iterator e = state_->edges_.begin();
-       e != state_->edges_.end(); ++e) {
+  for (auto & edge : state_->edges_) {
     // Do not try to remove phony targets
-    if ((*e)->is_phony())
+    if (edge->is_phony())
       continue;
     // Do not remove generator's files unless generator specified.
-    if (!generator && (*e)->GetBindingBool("generator"))
+    if (!generator && edge->GetBindingBool("generator"))
       continue;
-    for (std::vector<Node*>::iterator out_node = (*e)->outputs_.begin();
-         out_node != (*e)->outputs_.end(); ++out_node) {
+    for (auto out_node = edge->outputs_.begin();
+         out_node != edge->outputs_.end(); ++out_node) {
       Remove((*out_node)->path());
     }
 
-    RemoveEdgeFiles(*e);
+    RemoveEdgeFiles(edge);
   }
   PrintFooter();
   return status_;
@@ -120,11 +119,10 @@ int Cleaner::CleanAll(bool generator) {
 int Cleaner::CleanDead(const BuildLog::Entries& entries) {
   Reset();
   PrintHeader();
-  for (BuildLog::Entries::const_iterator i = entries.begin();
-       i != entries.end(); ++i) {
-    Node* n = state_->LookupNode(i->first);
+  for (const auto & entrie : entries) {
+    Node* n = state_->LookupNode(entrie.first);
     if (!n || !n->in_edge()) {
-      Remove(i->first.AsString());
+      Remove(entrie.first.AsString());
     }
   }
   PrintFooter();
@@ -138,9 +136,7 @@ void Cleaner::DoCleanTarget(Node* target) {
       Remove(target->path());
       RemoveEdgeFiles(e);
     }
-    for (std::vector<Node*>::iterator n = e->inputs_.begin();
-         n != e->inputs_.end(); ++n) {
-      Node* next = *n;
+    for (auto next : e->inputs_) {
       // call DoCleanTarget recursively if this node has not been visited
       if (cleaned_.count(next) == 0) {
         DoCleanTarget(next);
@@ -208,13 +204,12 @@ int Cleaner::CleanTargets(int target_count, char* targets[]) {
 void Cleaner::DoCleanRule(const Rule* rule) {
   assert(rule);
 
-  for (std::vector<Edge*>::iterator e = state_->edges_.begin();
-       e != state_->edges_.end(); ++e) {
-    if ((*e)->rule().name() == rule->name()) {
-      for (std::vector<Node*>::iterator out_node = (*e)->outputs_.begin();
-           out_node != (*e)->outputs_.end(); ++out_node) {
+  for (auto & edge : state_->edges_) {
+    if (edge->rule().name() == rule->name()) {
+      for (auto out_node = edge->outputs_.begin();
+           out_node != edge->outputs_.end(); ++out_node) {
         Remove((*out_node)->path());
-        RemoveEdgeFiles(*e);
+        RemoveEdgeFiles(edge);
       }
     }
   }
@@ -276,9 +271,8 @@ void Cleaner::Reset() {
 
 void Cleaner::LoadDyndeps() {
   // Load dyndep files that exist, before they are cleaned.
-  for (std::vector<Edge*>::iterator e = state_->edges_.begin();
-       e != state_->edges_.end(); ++e) {
-    if (Node* dyndep = (*e)->dyndep_) {
+  for (auto & edge : state_->edges_) {
+    if (Node* dyndep = edge->dyndep_) {
       // Capture and ignore errors loading the dyndep file.
       // We clean as much of the graph as we know.
       std::string err;

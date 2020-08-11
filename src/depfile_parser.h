@@ -22,7 +22,7 @@
 #include "string_piece.h"
 
 struct DepfileParserOptions {
-  DepfileParserOptions() {}
+  DepfileParserOptions() = default;
 };
 
 /// Parser for the dependency information emitted by gcc's -M flags.

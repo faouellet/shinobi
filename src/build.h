@@ -41,7 +41,7 @@ struct State;
 /// Plan stores the state of a build plan: what we intend to build,
 /// which steps we're ready to execute.
 struct Plan {
-  Plan(Builder* builder = NULL);
+  Plan(Builder* builder = nullptr);
 
   /// Add a target to our plan (including all its dependencies).
   /// Returns false if we don't need to build this target; may
@@ -125,23 +125,23 @@ struct Plan {
   Builder* builder_;
 
   /// Total number of edges that have commands (not phony).
-  int command_edges_;
+  int command_edges_{0};
 
   /// Total remaining number of wanted edges.
-  int wanted_edges_;
+  int wanted_edges_{0};
 };
 
 /// CommandRunner is an interface that wraps running the build
 /// subcommands.  This allows tests to abstract out running commands.
 /// RealCommandRunner is an implementation that actually runs commands.
 struct CommandRunner {
-  virtual ~CommandRunner() {}
+  virtual ~CommandRunner() = default;
   virtual bool CanRunMore() const = 0;
   virtual bool StartCommand(Edge* edge) = 0;
 
   /// The result of waiting for a command.
   struct Result {
-    Result() : edge(NULL) {}
+    Result() : edge(nullptr) {}
     Edge* edge;
     ExitStatus status;
     std::string output;
@@ -157,21 +157,21 @@ struct CommandRunner {
 /// Options (e.g. verbosity, parallelism) passed to a build.
 struct BuildConfig {
   BuildConfig()
-      : verbosity(NORMAL), dry_run(false), parallelism(1), failures_allowed(1),
-        max_load_average(-0.0f) {}
+      
+        = default;
 
   enum Verbosity {
     NORMAL,
     QUIET,  // No output -- used when testing.
     VERBOSE
   };
-  Verbosity verbosity;
-  bool dry_run;
-  int parallelism;
-  int failures_allowed;
+  Verbosity verbosity{NORMAL};
+  bool dry_run{false};
+  int parallelism{1};
+  int failures_allowed{1};
   /// The maximum load average we must not exceed. A negative value
   /// means that we do not have any limit.
-  double max_load_average;
+  double max_load_average{-0.0f};
   DepfileParserOptions depfile_parser_options;
 };
 
@@ -286,7 +286,7 @@ struct BuildStatus {
   }
 
   struct RateInfo {
-    RateInfo() : rate_(-1) {}
+    RateInfo()  = default;
 
     void Restart() { stopwatch_.Restart(); }
     double Elapsed() const { return stopwatch_.Elapsed(); }
@@ -298,7 +298,7 @@ struct BuildStatus {
     }
 
    private:
-    double rate_;
+    double rate_{-1};
     Stopwatch stopwatch_;
   };
 

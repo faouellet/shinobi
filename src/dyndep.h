@@ -26,9 +26,9 @@ struct State;
 
 /// Store dynamically-discovered dependency information for one edge.
 struct Dyndeps {
-  Dyndeps() : used_(false), restat_(false) {}
-  bool used_;
-  bool restat_;
+  Dyndeps()  = default;
+  bool used_{false};
+  bool restat_{false};
   std::vector<Node*> implicit_inputs_;
   std::vector<Node*> implicit_outputs_;
 };
@@ -55,7 +55,7 @@ struct DyndepLoader {
  private:
   bool LoadDyndepFile(Node* file, DyndepFile* ddf, std::string* err) const;
 
-  bool UpdateEdge(Edge* edge, Dyndeps const* dyndeps, std::string* err) const;
+  static bool UpdateEdge(Edge* edge, Dyndeps const* dyndeps, std::string* err) ;
 
   State* state_;
   DiskInterface* disk_interface_;

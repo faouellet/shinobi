@@ -24,7 +24,7 @@
 /// Interface for reading files from disk.  See DiskInterface for details.
 /// This base offers the minimum interface needed just to read files.
 struct FileReader {
-  virtual ~FileReader() {}
+  virtual ~FileReader() = default;
 
   /// Result of ReadFile.
   enum Status {
@@ -73,13 +73,13 @@ struct RealDiskInterface : public DiskInterface {
 #ifdef _WIN32
                       : use_cache_(false)
 #endif
-                      {}
-  virtual ~RealDiskInterface() {}
-  virtual TimeStamp Stat(const std::string& path, std::string* err) const;
-  virtual bool MakeDir(const std::string& path);
-  virtual bool WriteFile(const std::string& path, const std::string& contents);
-  virtual Status ReadFile(const std::string& path, std::string* contents, std::string* err);
-  virtual int RemoveFile(const std::string& path);
+                      = default;
+  ~RealDiskInterface() override = default;
+  TimeStamp Stat(const std::string& path, std::string* err) const override;
+  bool MakeDir(const std::string& path) override;
+  bool WriteFile(const std::string& path, const std::string& contents) override;
+  Status ReadFile(const std::string& path, std::string* contents, std::string* err) override;
+  int RemoveFile(const std::string& path) override;
 
   /// Whether stat information can be cached.  Only has an effect on Windows.
   void AllowStatCache(bool allow);

@@ -28,11 +28,11 @@ namespace {
 const char kTestFilename[] = "DepsLogTest-tempfile";
 
 struct DepsLogTest : public testing::Test {
-  virtual void SetUp() {
+  void SetUp() override {
     // In case a crashing test left a stale file behind.
     unlink(kTestFilename);
   }
-  virtual void TearDown() { unlink(kTestFilename); }
+  void TearDown() override { unlink(kTestFilename); }
 };
 
 TEST_F(DepsLogTest, WriteRead) {
@@ -329,13 +329,12 @@ TEST_F(DepsLogTest, InvalidHeader) {
     "# ninjadeps\n\001\002",         // Truncated version int.
     "# ninjadeps\n\001\002\003\004"  // Invalid version int.
   };
-  for (size_t i = 0; i < sizeof(kInvalidHeaders) / sizeof(kInvalidHeaders[0]);
-       ++i) {
+  for (auto & kInvalidHeader : kInvalidHeaders) {
     FILE* deps_log = fopen(kTestFilename, "wb");
-    ASSERT_TRUE(deps_log != NULL);
+    ASSERT_TRUE(deps_log != nullptr);
     ASSERT_EQ(
-        strlen(kInvalidHeaders[i]),
-        fwrite(kInvalidHeaders[i], 1, strlen(kInvalidHeaders[i]), deps_log));
+        strlen(kInvalidHeader),
+        fwrite(kInvalidHeader, 1, strlen(kInvalidHeader), deps_log));
     ASSERT_EQ(0, fclose(deps_log));
 
     std::string err;
@@ -395,9 +394,8 @@ TEST_F(DepsLogTest, Truncated) {
 
     // Count how many non-NULL deps entries there are.
     int new_deps_count = 0;
-    for (std::vector<DepsLog::Deps*>::const_iterator i = log.deps().begin();
-         i != log.deps().end(); ++i) {
-      if (*i)
+    for (auto i : log.deps()) {
+      if (i)
         ++new_deps_count;
     }
     ASSERT_GE(deps_count, new_deps_count);
@@ -446,7 +444,7 @@ TEST_F(DepsLogTest, TruncatedRecovery) {
     err.clear();
 
     // The truncated entry should've been discarded.
-    EXPECT_EQ(NULL, log.GetDeps(state.GetNode("out2.o", 0)));
+    EXPECT_EQ(nullptr, log.GetDeps(state.GetNode("out2.o", 0)));
 
     EXPECT_TRUE(log.OpenForWrite(kTestFilename, &err));
     ASSERT_EQ("", err);

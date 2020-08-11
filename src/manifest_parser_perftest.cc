@@ -15,11 +15,10 @@
 // Tests manifest parser performance.  Expects to be run in ninja's root
 // directory.
 
-#include <errno.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <numeric>
 
 #ifdef _WIN32
@@ -68,8 +67,8 @@ int LoadManifests(bool measure_command_evaluation) {
   // evaluation in the perftest by default.
   int optimization_guard = 0;
   if (measure_command_evaluation)
-    for (size_t i = 0; i < state.edges_.size(); ++i)
-      optimization_guard += state.edges_[i]->EvaluateCommand().size();
+    for (auto & edge : state.edges_)
+      optimization_guard += edge->EvaluateCommand().size();
   return optimization_guard;
 }
 

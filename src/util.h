@@ -18,7 +18,7 @@
 #ifdef _WIN32
 #include "win32port.h"
 #else
-#include <stdint.h>
+#include <cstdint>
 #endif
 
 #include <string>

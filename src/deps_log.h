@@ -15,11 +15,9 @@
 #ifndef NINJA_DEPS_LOG_H_
 #define NINJA_DEPS_LOG_H_
 
+#include <cstdio>
 #include <string>
 #include <vector>
-
-
-#include <stdio.h>
 
 #include "load_status.h"
 #include "timestamp.h"
@@ -67,7 +65,7 @@ struct State;
 /// wins, allowing updates to just be appended to the file.  A separate
 /// repacking step can run occasionally to remove dead records.
 struct DepsLog {
-  DepsLog() : needs_recompaction_(false), file_(NULL) {}
+  DepsLog() :  file_(nullptr) {}
   ~DepsLog();
 
   // Writing (build-time) interface.
@@ -97,7 +95,7 @@ struct DepsLog {
   /// past but are no longer part of the manifest.  This function returns if
   /// this is the case for a given node.  This function is slow, don't call
   /// it from code that runs on every build.
-  bool IsDepsEntryLiveFor(Node* node);
+  static bool IsDepsEntryLiveFor(Node* node);
 
   /// Used for tests.
   const std::vector<Node*>& nodes() const { return nodes_; }
@@ -110,7 +108,7 @@ struct DepsLog {
   // Write a node name record, assigning it an id.
   bool RecordId(Node* node);
 
-  bool needs_recompaction_;
+  bool needs_recompaction_{false};
   FILE* file_;
 
   /// Maps id -> Node.

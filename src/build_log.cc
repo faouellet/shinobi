@@ -22,15 +22,18 @@
 
 #include "build_log.h"
 
-#include <errno.h>
+#include <cerrno>
+#include <cstdlib>
 #include <cstring>
-#include <stdlib.h>
 
 #include "disk_interface.h"
 
 #ifndef _WIN32
-#include <inttypes.h>
 #include <unistd.h>
+
+#include <cinttypes>
+#include <utility>
+
 #endif
 
 #include "build.h"
@@ -65,7 +68,7 @@ inline uint64_t MurmurHash64A(const void* key, size_t len) {
   const uint64_t m = BIG_CONSTANT(0xc6a4a7935bd1e995);
   const int r = 47;
   uint64_t h = seed ^ (len * m);
-  const unsigned char* data = (const unsigned char*)key;
+  const auto* data = (const unsigned char*)key;
   while (len >= 8) {
     uint64_t k;
     memcpy(&k, data, sizeof k);
@@ -114,15 +117,15 @@ uint64_t BuildLog::LogEntry::HashCommand(StringPiece command) {
   return MurmurHash64A(command.str_, command.len_);
 }
 
-BuildLog::LogEntry::LogEntry(const std::string& output) : output(output) {}
+BuildLog::LogEntry::LogEntry(std::string  output) : output(std::move(output)) {}
 
-BuildLog::LogEntry::LogEntry(const std::string& output, uint64_t command_hash,
+BuildLog::LogEntry::LogEntry(std::string  output, uint64_t command_hash,
                              int start_time, int end_time,
                              TimeStamp restat_mtime)
-    : output(output), command_hash(command_hash), start_time(start_time),
+    : output(std::move(output)), command_hash(command_hash), start_time(start_time),
       end_time(end_time), mtime(restat_mtime) {}
 
-BuildLog::BuildLog() : log_file_(NULL), needs_recompaction_(false) {}
+BuildLog::BuildLog() : log_file_(nullptr) {}
 
 BuildLog::~BuildLog() {
   Close();
@@ -140,7 +143,7 @@ bool BuildLog::OpenForWrite(const std::string& path, const BuildLogUser& user,
     *err = strerror(errno);
     return false;
   }
-  std::setvbuf(log_file_, NULL, _IOLBF, BUFSIZ);
+  std::setvbuf(log_file_, nullptr, _IOLBF, BUFSIZ);
   SetCloseOnExec(fileno(log_file_));
 
   // Opening a file in append mode doesn't std::set the file pointer to the file's
@@ -161,10 +164,9 @@ bool BuildLog::RecordCommand(Edge* edge, int start_time, int end_time,
                              TimeStamp mtime) {
   std::string command = edge->EvaluateCommand(true);
   uint64_t command_hash = LogEntry::HashCommand(command);
-  for (std::vector<Node*>::iterator out = edge->outputs_.begin();
-       out != edge->outputs_.end(); ++out) {
-    const std::string& path = (*out)->path();
-    Entries::iterator i = entries_.find(path);
+  for (auto & output : edge->outputs_) {
+    const std::string& path = output->path();
+    auto i = entries_.find(path);
     LogEntry* log_entry;
     if (i != entries_.end()) {
       log_entry = i->second;
@@ -191,12 +193,12 @@ bool BuildLog::RecordCommand(Edge* edge, int start_time, int end_time,
 void BuildLog::Close() {
   if (log_file_)
     fclose(log_file_);
-  log_file_ = NULL;
+  log_file_ = nullptr;
 }
 
 struct LineReader {
   explicit LineReader(FILE* file)
-      : file_(file), buf_end_(buf_), line_start_(buf_), line_end_(NULL) {
+      : file_(file), buf_end_(buf_), line_start_(buf_), line_end_(nullptr) {
     memset(buf_, 0, sizeof(buf_));
   }
 
@@ -260,8 +262,8 @@ LoadStatus BuildLog::Load(const std::string& path, std::string* err) {
   int total_entry_count = 0;
 
   LineReader reader(file);
-  char* line_start = 0;
-  char* line_end = 0;
+  char* line_start = nullptr;
+  char* line_end = nullptr;
   while (reader.ReadLine(&line_start, &line_end)) {
     if (!log_version) {
       sscanf(line_start, kFileSignature, &log_version);
@@ -307,7 +309,7 @@ LoadStatus BuildLog::Load(const std::string& path, std::string* err) {
     if (!end)
       continue;
     *end = 0;
-    restat_mtime = strtoll(start, NULL, 10);
+    restat_mtime = strtoll(start, nullptr, 10);
     start = end + 1;
 
     end = (char*)memchr(start, kFieldSeparator, line_end - start);
@@ -319,7 +321,7 @@ LoadStatus BuildLog::Load(const std::string& path, std::string* err) {
     end = line_end;
 
     LogEntry* entry;
-    Entries::iterator i = entries_.find(output);
+    auto i = entries_.find(output);
     if (i != entries_.end()) {
       entry = i->second;
     } else {
@@ -335,7 +337,7 @@ LoadStatus BuildLog::Load(const std::string& path, std::string* err) {
     if (log_version >= 5) {
       char c = *end;
       *end = '\0';
-      entry->command_hash = (uint64_t)strtoull(start, NULL, 16);
+      entry->command_hash = (uint64_t)strtoull(start, nullptr, 16);
       *end = c;
     } else {
       entry->command_hash =
@@ -364,10 +366,10 @@ LoadStatus BuildLog::Load(const std::string& path, std::string* err) {
 }
 
 BuildLog::LogEntry* BuildLog::LookupByOutput(const std::string& path) {
-  Entries::iterator i = entries_.find(path);
+  auto i = entries_.find(path);
   if (i != entries_.end())
     return i->second;
-  return NULL;
+  return nullptr;
 }
 
 bool BuildLog::WriteEntry(FILE* f, const LogEntry& entry) {
@@ -395,21 +397,21 @@ bool BuildLog::Recompact(const std::string& path, const BuildLogUser& user,
   }
 
   std::vector<StringPiece> dead_outputs;
-  for (Entries::iterator i = entries_.begin(); i != entries_.end(); ++i) {
-    if (user.IsPathDead(i->first)) {
-      dead_outputs.push_back(i->first);
+  for (auto & entrie : entries_) {
+    if (user.IsPathDead(entrie.first)) {
+      dead_outputs.push_back(entrie.first);
       continue;
     }
 
-    if (!WriteEntry(f, *i->second)) {
+    if (!WriteEntry(f, *entrie.second)) {
       *err = strerror(errno);
       fclose(f);
       return false;
     }
   }
 
-  for (size_t i = 0; i < dead_outputs.size(); ++i)
-    entries_.erase(dead_outputs[i]);
+  for (auto & dead_output : dead_outputs)
+    entries_.erase(dead_output);
 
   fclose(f);
   if (unlink(path.c_str()) < 0) {
@@ -444,24 +446,24 @@ bool BuildLog::Restat(const StringPiece path,
     fclose(f);
     return false;
   }
-  for (Entries::iterator i = entries_.begin(); i != entries_.end(); ++i) {
+  for (auto & entrie : entries_) {
     bool skip = output_count > 0;
     for (int j = 0; j < output_count; ++j) {
-      if (i->second->output == outputs[j]) {
+      if (entrie.second->output == outputs[j]) {
         skip = false;
         break;
       }
     }
     if (!skip) {
-      const TimeStamp mtime = disk_interface.Stat(i->second->output, err);
+      const TimeStamp mtime = disk_interface.Stat(entrie.second->output, err);
       if (mtime == -1) {
         fclose(f);
         return false;
       }
-      i->second->mtime = mtime;
+      entrie.second->mtime = mtime;
     }
 
-    if (!WriteEntry(f, *i->second)) {
+    if (!WriteEntry(f, *entrie.second)) {
       *err = strerror(errno);
       fclose(f);
       return false;

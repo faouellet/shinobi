@@ -29,7 +29,7 @@ const char kTestFilename[] = "CleanTest-tempfile";
 struct CleanTest : public StateTestWithBuiltinRules {
   VirtualFileSystem fs_;
   BuildConfig config_;
-  virtual void SetUp() { config_.verbosity = BuildConfig::QUIET; }
+  void SetUp() override { config_.verbosity = BuildConfig::QUIET; }
 };
 
 TEST_F(CleanTest, CleanAll) {
@@ -457,13 +457,13 @@ TEST_F(CleanTest, CleanDepFileAndRspFileWithSpaces) {
 }
 
 struct CleanDeadTest : public CleanTest, public BuildLogUser {
-  virtual void SetUp() {
+  void SetUp() override {
     // In case a crashing test left a stale file behind.
     unlink(kTestFilename);
     CleanTest::SetUp();
   }
-  virtual void TearDown() { unlink(kTestFilename); }
-  virtual bool IsPathDead(StringPiece) const { return false; }
+  void TearDown() override { unlink(kTestFilename); }
+  bool IsPathDead(StringPiece) const override { return false; }
 };
 
 TEST_F(CleanDeadTest, CleanDead) {

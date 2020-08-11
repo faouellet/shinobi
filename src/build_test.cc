@@ -14,7 +14,7 @@
 
 #include "build.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "build_log.h"
 #include "deps_log.h"
@@ -81,7 +81,7 @@ TEST_F(PlanTest, Basic) {
 
   ASSERT_FALSE(plan_.more_to_do());
   edge = plan_.FindWork();
-  ASSERT_EQ(0, edge);
+  ASSERT_EQ(nullptr, edge);
 }
 
 // Test that two outputs from one rule can be handled as inputs to the next.
@@ -231,7 +231,7 @@ void PlanTest::TestPoolWithDepthOne(const char* test_case) {
 
   ASSERT_FALSE(plan_.more_to_do());
   edge = plan_.FindWork();
-  ASSERT_EQ(0, edge);
+  ASSERT_EQ(nullptr, edge);
 }
 
 TEST_F(PlanTest, PoolWithDepthOne) {
@@ -321,9 +321,8 @@ TEST_F(PlanTest, PoolsWithDepthTwo) {
 
   ASSERT_FALSE(plan_.FindWork());
 
-  for (std::deque<Edge*>::iterator it = edges.begin(); it != edges.end();
-       ++it) {
-    plan_.EdgeFinished(*it, Plan::kEdgeSucceeded, &err);
+  for (auto & edge : edges) {
+    plan_.EdgeFinished(edge, Plan::kEdgeSucceeded, &err);
     ASSERT_EQ("", err);
   }
 
@@ -368,7 +367,7 @@ TEST_F(PlanTest, PoolWithRedundantEdges) {
   ASSERT_EQ("", err);
   ASSERT_TRUE(plan_.more_to_do());
 
-  Edge* edge = NULL;
+  Edge* edge = nullptr;
 
   std::deque<Edge*> initial_edges;
   FindWorkSorted(&initial_edges, 2);
@@ -464,7 +463,7 @@ TEST_F(PlanTest, PoolWithFailingEdge) {
 
   ASSERT_TRUE(plan_.more_to_do());  // Jobs have failed
   edge = plan_.FindWork();
-  ASSERT_EQ(0, edge);
+  ASSERT_EQ(nullptr, edge);
 }
 
 /// Fake implementation of CommandRunner, useful for tests.
@@ -473,11 +472,11 @@ struct FakeCommandRunner : public CommandRunner {
       : max_active_edges_(1), fs_(fs) {}
 
   // CommandRunner impl
-  virtual bool CanRunMore() const;
-  virtual bool StartCommand(Edge* edge);
-  virtual bool WaitForCommand(Result* result);
-  virtual std::vector<Edge*> GetActiveEdges();
-  virtual void Abort();
+  bool CanRunMore() const override;
+  bool StartCommand(Edge* edge) override;
+  bool WaitForCommand(Result* result) override;
+  std::vector<Edge*> GetActiveEdges() override;
+  void Abort() override;
 
   std::vector<std::string> commands_ran_;
   std::vector<Edge*> active_edges_;
@@ -488,13 +487,13 @@ struct FakeCommandRunner : public CommandRunner {
 struct BuildTest : public StateTestWithBuiltinRules, public BuildLogUser {
   BuildTest()
       : config_(MakeConfig()), command_runner_(&fs_),
-        builder_(&state_, config_, NULL, NULL, &fs_), status_(config_) {}
+        builder_(&state_, config_, nullptr, nullptr, &fs_), status_(config_) {}
 
   BuildTest(DepsLog* log)
       : config_(MakeConfig()), command_runner_(&fs_),
-        builder_(&state_, config_, NULL, log, &fs_), status_(config_) {}
+        builder_(&state_, config_, nullptr, log, &fs_), status_(config_) {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     StateTestWithBuiltinRules::SetUp();
 
     builder_.command_runner_.reset(&command_runner_);
@@ -507,21 +506,21 @@ struct BuildTest : public StateTestWithBuiltinRules, public BuildLogUser {
     fs_.Create("in2", "");
   }
 
-  ~BuildTest() { builder_.command_runner_.release(); }
+  ~BuildTest() override { builder_.command_runner_.release(); }
 
-  virtual bool IsPathDead(StringPiece s) const { return false; }
+  bool IsPathDead(StringPiece  /*s*/) const override { return false; }
 
   /// Rebuild target in the 'working tree' (fs_).
   /// State of command_runner_ and logs contents (if specified) ARE MODIFIED.
   /// Handy to check for NOOP builds, and higher-level rebuild tests.
   void RebuildTarget(const std::string& target, const char* manifest,
-                     const char* log_path = NULL, const char* deps_path = NULL,
-                     State* state = NULL);
+                     const char* log_path = nullptr, const char* deps_path = nullptr,
+                     State* state = nullptr);
 
   // Mark a path dirty.
   void Dirty(const std::string& path);
 
-  BuildConfig MakeConfig() {
+  static BuildConfig MakeConfig() {
     BuildConfig config;
     config.verbosity = BuildConfig::QUIET;
     return config;
@@ -545,7 +544,7 @@ void BuildTest::RebuildTarget(const std::string& target, const char* manifest,
   AssertParse(pstate, manifest);
 
   std::string err;
-  BuildLog build_log, *pbuild_log = NULL;
+  BuildLog build_log, *pbuild_log = nullptr;
   if (log_path) {
     ASSERT_TRUE(build_log.Load(log_path, &err));
     ASSERT_TRUE(build_log.OpenForWrite(log_path, *this, &err));
@@ -553,7 +552,7 @@ void BuildTest::RebuildTarget(const std::string& target, const char* manifest,
     pbuild_log = &build_log;
   }
 
-  DepsLog deps_log, *pdeps_log = NULL;
+  DepsLog deps_log, *pdeps_log = nullptr;
   if (deps_path) {
     ASSERT_TRUE(deps_log.Load(deps_path, pstate, &err));
     ASSERT_TRUE(deps_log.OpenForWrite(deps_path, &err));
@@ -588,9 +587,8 @@ bool FakeCommandRunner::StartCommand(Edge* edge) {
       edge->rule().name() == "cp_multi_gcc" || edge->rule().name() == "touch" ||
       edge->rule().name() == "touch-interrupt" ||
       edge->rule().name() == "touch-fail-tick2") {
-    for (std::vector<Node*>::iterator out = edge->outputs_.begin();
-         out != edge->outputs_.end(); ++out) {
-      fs_->Create((*out)->path(), "");
+    for (auto & output : edge->outputs_) {
+      fs_->Create(output->path(), "");
     }
   } else if (edge->rule().name() == "true" || edge->rule().name() == "fail" ||
              edge->rule().name() == "interrupt" ||
@@ -624,7 +622,7 @@ bool FakeCommandRunner::WaitForCommand(Result* result) {
   // All active edges were already completed immediately when started,
   // so we can pick any edge here.  Pick the last edge.  Tests can
   // control the order of edges by the name of the first output.
-  std::vector<Edge*>::iterator edge_iter = active_edges_.end() - 1;
+  auto edge_iter = active_edges_.end() - 1;
 
   Edge* edge = *edge_iter;
   result->edge = edge;
@@ -646,9 +644,8 @@ bool FakeCommandRunner::WaitForCommand(Result* result) {
 
   if (edge->rule().name() == "cp_multi_msvc") {
     const std::string prefix = edge->GetBinding("msvc_deps_prefix");
-    for (std::vector<Node*>::iterator in = edge->inputs_.begin();
-         in != edge->inputs_.end(); ++in) {
-      result->output += prefix + (*in)->path() + '\n';
+    for (auto & input : edge->inputs_) {
+      result->output += prefix + input->path() + '\n';
     }
   }
 
@@ -665,10 +662,9 @@ bool FakeCommandRunner::WaitForCommand(Result* result) {
       edge->GetBinding("verify_active_edge");
   if (!verify_active_edge.empty()) {
     bool verify_active_edge_found = false;
-    for (std::vector<Edge*>::iterator i = active_edges_.begin();
-         i != active_edges_.end(); ++i) {
-      if ((*i)->outputs_.size() >= 1 &&
-          (*i)->outputs_[0]->path() == verify_active_edge) {
+    for (auto & active_edge : active_edges_) {
+      if (!active_edge->outputs_.empty() &&
+          active_edge->outputs_[0]->path() == verify_active_edge) {
         verify_active_edge_found = true;
       }
     }
@@ -1257,7 +1253,7 @@ TEST_F(BuildTest, PoolEdgesReadyButNotWanted) {
   fs_.RemoveFile("B.d.stamp");
 
   State save_state;
-  RebuildTarget("final.stamp", manifest, NULL, NULL, &save_state);
+  RebuildTarget("final.stamp", manifest, nullptr, nullptr, &save_state);
   EXPECT_GE(save_state.LookupPool("some_pool")->current_use(), 0);
 }
 
@@ -1546,7 +1542,7 @@ TEST_F(BuildWithLogTest, RestatMissingInput) {
   // See that an entry in the logfile is created, capturing
   // the right mtime
   BuildLog::LogEntry* log_entry = build_log_.LookupByOutput("out1");
-  ASSERT_TRUE(NULL != log_entry);
+  ASSERT_TRUE(nullptr != log_entry);
   ASSERT_EQ(restat_mtime, log_entry->mtime);
 
   // Now remove a file, referenced from depfile, so that target becomes
@@ -1563,7 +1559,7 @@ TEST_F(BuildWithLogTest, RestatMissingInput) {
 
   // Check that the logfile entry remains correctly std::set
   log_entry = build_log_.LookupByOutput("out1");
-  ASSERT_TRUE(NULL != log_entry);
+  ASSERT_TRUE(nullptr != log_entry);
   ASSERT_EQ(restat_mtime, log_entry->mtime);
 }
 
@@ -1727,7 +1723,7 @@ TEST_F(BuildWithLogTest, RspFileCmdLineChange) {
   // 3. Alter the entry in the logfile
   // (to simulate a change in the command line between 2 builds)
   BuildLog::LogEntry* log_entry = build_log_.LookupByOutput("out");
-  ASSERT_TRUE(NULL != log_entry);
+  ASSERT_TRUE(nullptr != log_entry);
   ASSERT_NO_FATAL_FAILURE(
       AssertHash("cat out.rsp > out;rspfile=Original very long command",
                  log_entry->command_hash));
@@ -1868,9 +1864,9 @@ TEST_F(BuildTest, FailedDepsParse) {
 struct BuildWithQueryDepsLogTest : public BuildTest {
   BuildWithQueryDepsLogTest() : BuildTest(&log_) {}
 
-  ~BuildWithQueryDepsLogTest() { log_.Close(); }
+  ~BuildWithQueryDepsLogTest() override { log_.Close(); }
 
-  virtual void SetUp() {
+  void SetUp() override {
     BuildTest::SetUp();
 
     temp_dir_.CreateAndEnter("BuildWithQueryDepsLogTest");
@@ -2104,15 +2100,15 @@ TEST_F(BuildWithQueryDepsLogTest, TwoOutputsDepFileGCCOnlySecondaryOutput) {
 /// builder_ it std::sets up, because we want pristine objects for
 /// each build.
 struct BuildWithDepsLogTest : public BuildTest {
-  BuildWithDepsLogTest() {}
+  BuildWithDepsLogTest() = default;
 
-  virtual void SetUp() {
+  void SetUp() override {
     BuildTest::SetUp();
 
     temp_dir_.CreateAndEnter("BuildWithDepsLogTest");
   }
 
-  virtual void TearDown() { temp_dir_.Cleanup(); }
+  void TearDown() override { temp_dir_.Cleanup(); }
 
   ScopedTempDir temp_dir_;
 
@@ -2138,7 +2134,7 @@ TEST_F(BuildWithDepsLogTest, Straightforward) {
     ASSERT_TRUE(deps_log.OpenForWrite("ninja_deps", &err));
     ASSERT_EQ("", err);
 
-    Builder builder(&state, config_, NULL, &deps_log, &fs_);
+    Builder builder(&state, config_, nullptr, &deps_log, &fs_);
     builder.command_runner_.reset(&command_runner_);
     EXPECT_TRUE(builder.AddTarget("out", &err));
     ASSERT_EQ("", err);
@@ -2168,7 +2164,7 @@ TEST_F(BuildWithDepsLogTest, Straightforward) {
     ASSERT_TRUE(deps_log.Load("ninja_deps", &state, &err));
     ASSERT_TRUE(deps_log.OpenForWrite("ninja_deps", &err));
 
-    Builder builder(&state, config_, NULL, &deps_log, &fs_);
+    Builder builder(&state, config_, nullptr, &deps_log, &fs_);
     builder.command_runner_.reset(&command_runner_);
     command_runner_.commands_ran_.clear();
     EXPECT_TRUE(builder.AddTarget("out", &err));
@@ -2209,7 +2205,7 @@ TEST_F(BuildWithDepsLogTest, ObsoleteDeps) {
     ASSERT_TRUE(deps_log.OpenForWrite("ninja_deps", &err));
     ASSERT_EQ("", err);
 
-    Builder builder(&state, config_, NULL, &deps_log, &fs_);
+    Builder builder(&state, config_, nullptr, &deps_log, &fs_);
     builder.command_runner_.reset(&command_runner_);
     EXPECT_TRUE(builder.AddTarget("out", &err));
     ASSERT_EQ("", err);
@@ -2238,7 +2234,7 @@ TEST_F(BuildWithDepsLogTest, ObsoleteDeps) {
     ASSERT_TRUE(deps_log.Load("ninja_deps", &state, &err));
     ASSERT_TRUE(deps_log.OpenForWrite("ninja_deps", &err));
 
-    Builder builder(&state, config_, NULL, &deps_log, &fs_);
+    Builder builder(&state, config_, nullptr, &deps_log, &fs_);
     builder.command_runner_.reset(&command_runner_);
     command_runner_.commands_ran_.clear();
     EXPECT_TRUE(builder.AddTarget("out", &err));
@@ -2274,7 +2270,7 @@ TEST_F(BuildWithDepsLogTest, DepsIgnoredInDryRun) {
 
   // The deps log is NULL in dry runs.
   config_.dry_run = true;
-  Builder builder(&state, config_, NULL, NULL, &fs_);
+  Builder builder(&state, config_, nullptr, nullptr, &fs_);
   builder.command_runner_.reset(&command_runner_);
   command_runner_.commands_ran_.clear();
 
@@ -2333,7 +2329,7 @@ TEST_F(BuildWithDepsLogTest, RestatDepfileDependencyDepsLog) {
     ASSERT_TRUE(deps_log.OpenForWrite("ninja_deps", &err));
     ASSERT_EQ("", err);
 
-    Builder builder(&state, config_, NULL, &deps_log, &fs_);
+    Builder builder(&state, config_, nullptr, &deps_log, &fs_);
     builder.command_runner_.reset(&command_runner_);
     EXPECT_TRUE(builder.AddTarget("out", &err));
     ASSERT_EQ("", err);
@@ -2359,7 +2355,7 @@ TEST_F(BuildWithDepsLogTest, RestatDepfileDependencyDepsLog) {
     ASSERT_TRUE(deps_log.Load("ninja_deps", &state, &err));
     ASSERT_TRUE(deps_log.OpenForWrite("ninja_deps", &err));
 
-    Builder builder(&state, config_, NULL, &deps_log, &fs_);
+    Builder builder(&state, config_, nullptr, &deps_log, &fs_);
     builder.command_runner_.reset(&command_runner_);
     command_runner_.commands_ran_.clear();
     EXPECT_TRUE(builder.AddTarget("out", &err));
@@ -2392,7 +2388,7 @@ TEST_F(BuildWithDepsLogTest, DepFileOKDepsLog) {
     ASSERT_TRUE(deps_log.OpenForWrite("ninja_deps", &err));
     ASSERT_EQ("", err);
 
-    Builder builder(&state, config_, NULL, &deps_log, &fs_);
+    Builder builder(&state, config_, nullptr, &deps_log, &fs_);
     builder.command_runner_.reset(&command_runner_);
     EXPECT_TRUE(builder.AddTarget("fo o.o", &err));
     ASSERT_EQ("", err);
@@ -2413,7 +2409,7 @@ TEST_F(BuildWithDepsLogTest, DepFileOKDepsLog) {
     ASSERT_TRUE(deps_log.OpenForWrite("ninja_deps", &err));
     ASSERT_EQ("", err);
 
-    Builder builder(&state, config_, NULL, &deps_log, &fs_);
+    Builder builder(&state, config_, nullptr, &deps_log, &fs_);
     builder.command_runner_.reset(&command_runner_);
 
     Edge* edge = state.edges_.back();

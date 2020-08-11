@@ -33,7 +33,7 @@ struct DyndepParser: public Parser {
 
 private:
   /// Parse a file, given its contents as a std::string.
-  bool Parse(const std::string& filename, const std::string& input, std::string* err);
+  bool Parse(const std::string& filename, const std::string& input, std::string* err) override;
 
   bool ParseDyndepVersion(std::string* err);
   bool ParseLet(std::string* key, EvalString* val, std::string* err);

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include "clparser.h"
 #include "metrics.h"
 
-int main(int argc, char* argv[]) {
+int main(int  /*argc*/, char*  /*argv*/[]) {
   // Output of /showIncludes from #include <iostream>
   std::string perf_testdata =
       "Note: including file: C:\\Program Files (x86)\\Microsoft Visual Studio "
