@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 project(ninja)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(CMAKE_BUILD_TYPE MATCHES "Release")
 	cmake_policy(SET CMP0069 NEW)
 	include(CheckIPOSupported)

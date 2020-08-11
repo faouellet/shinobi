@@ -19,6 +19,7 @@
 /doc/doxygen
 *.patch
 .DS_Store
+compile_commands.json
 
 # Eclipse project files
 .project
@@ -38,3 +39,4 @@
 
 # Qt Creator project files
 /CMakeLists.txt.user
+
