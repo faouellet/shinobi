@@ -18,7 +18,6 @@
 #include <map>
 #include <string>
 
-
 #include "timestamp.h"
 
 /// Interface for reading files from disk.  See DiskInterface for details.
@@ -27,11 +26,7 @@ struct FileReader {
   virtual ~FileReader() = default;
 
   /// Result of ReadFile.
-  enum Status {
-    Okay,
-    NotFound,
-    OtherError
-  };
+  enum Status { Okay, NotFound, OtherError };
 
   /// Read and store in given std::string.  On success, return Okay.
   /// On error, return another Status and fill |err|.
@@ -43,7 +38,7 @@ struct FileReader {
 ///
 /// Abstract so it can be mocked out for tests.  The real implementation
 /// is RealDiskInterface.
-struct DiskInterface: public FileReader {
+struct DiskInterface : public FileReader {
   /// stat() a file, returning the mtime, or 0 if missing and -1 on
   /// other errors.
   virtual TimeStamp Stat(const std::string& path, std::string* err) const = 0;
@@ -53,7 +48,8 @@ struct DiskInterface: public FileReader {
 
   /// Create a file, with the specified name and contents
   /// Returns true on success, false on failure
-  virtual bool WriteFile(const std::string& path, const std::string& contents) = 0;
+  virtual bool WriteFile(const std::string& path,
+                         const std::string& contents) = 0;
 
   /// Remove the file named @a path. It behaves like 'rm -f path' so no errors
   /// are reported if it does not exists.
@@ -71,14 +67,17 @@ struct DiskInterface: public FileReader {
 struct RealDiskInterface : public DiskInterface {
   RealDiskInterface()
 #ifdef _WIN32
-                      : use_cache_(false)
+      : use_cache_(false)
 #endif
-                      = default;
+  {
+  }
+
   ~RealDiskInterface() override = default;
   TimeStamp Stat(const std::string& path, std::string* err) const override;
   bool MakeDir(const std::string& path) override;
   bool WriteFile(const std::string& path, const std::string& contents) override;
-  Status ReadFile(const std::string& path, std::string* contents, std::string* err) override;
+  Status ReadFile(const std::string& path, std::string* contents,
+                  std::string* err) override;
   int RemoveFile(const std::string& path) override;
 
   /// Whether stat information can be cached.  Only has an effect on Windows.
@@ -90,8 +89,8 @@ struct RealDiskInterface : public DiskInterface {
   bool use_cache_;
 
   typedef std::map<std::string, TimeStamp> DirCache;
-  // TODO: Neither a std::map nor a hashstd::map seems ideal here.  If the statcache
-  // works out, come up with a better data structure.
+  // TODO: Neither a std::map nor a hashstd::map seems ideal here.  If the
+  // statcache works out, come up with a better data structure.
   typedef std::map<std::string, DirCache> Cache;
   mutable Cache cache_;
 #endif

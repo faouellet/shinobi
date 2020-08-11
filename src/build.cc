@@ -21,7 +21,6 @@
 #include <functional>
 #include <memory>
 
-
 #ifdef _WIN32
 #include <fcntl.h>
 #include <io.h>
@@ -306,8 +305,7 @@ void BuildStatus::PrintStatus(const Edge* edge, EdgeStatus status) {
                  force_full_command ? LinePrinter::FULL : LinePrinter::ELIDE);
 }
 
-Plan::Plan(Builder* builder)
-    : builder_(builder) {}
+Plan::Plan(Builder* builder) : builder_(builder) {}
 
 void Plan::Reset() {
   command_edges_ = 0;
@@ -363,7 +361,7 @@ bool Plan::AddSubTarget(const Node* node, const Node* dependent,
   if (!want_ins.second)
     return true;  // We've already processed the inputs.
 
-  for (auto & input : edge->inputs_) {
+  for (auto& input : edge->inputs_) {
     if (!AddSubTarget(input, node, err, dyndep_walk) && !err->empty())
       return false;
   }
@@ -429,7 +427,7 @@ bool Plan::EdgeFinished(Edge* edge, EdgeResult result, std::string* err) {
   edge->outputs_ready_ = true;
 
   // Check off any nodes we were waiting for with this edge.
-  for (auto & output : edge->outputs_) {
+  for (auto& output : edge->outputs_) {
     if (!NodeFinished(output, err))
       return false;
   }
@@ -490,8 +488,7 @@ bool Plan::CleanNode(DependencyScan* scan, Node* node, std::string* err) {
     // If all non-order-only inputs for this edge are now clean,
     // we might have changed the dirty state of the outputs.
     auto begin = oe->inputs_.begin(),
-                                 end = oe->inputs_.end() -
-                                       oe->order_only_deps_;
+         end = oe->inputs_.end() - oe->order_only_deps_;
 #if __cplusplus < 201703L
 #define MEM_FN std::mem_fun
 #else
@@ -514,8 +511,7 @@ bool Plan::CleanNode(DependencyScan* scan, Node* node, std::string* err) {
         return false;
       }
       if (!outputs_dirty) {
-        for (auto o = oe->outputs_.begin();
-             o != oe->outputs_.end(); ++o) {
+        for (auto o = oe->outputs_.begin(); o != oe->outputs_.end(); ++o) {
           if (!CleanNode(scan, *o, err))
             return false;
         }
@@ -565,8 +561,7 @@ bool Plan::DyndepsLoaded(DependencyScan* scan, const Node* node,
   // Walk dyndep-discovered portion of the graph to add it to the build plan.
   std::set<Edge*> dyndep_walk;
   for (auto oe : dyndep_roots) {
-    for (auto i =
-             oe->second.implicit_inputs_.begin();
+    for (auto i = oe->second.implicit_inputs_.begin();
          i != oe->second.implicit_inputs_.end(); ++i) {
       if (!AddSubTarget(*i, oe->first->outputs_[0], err, &dyndep_walk) &&
           !err->empty())
@@ -634,7 +629,7 @@ void Plan::UnmarkDependents(const Node* node, std::set<Node*>* dependents) {
 
     if (edge->mark_ != Edge::VisitNone) {
       edge->mark_ = Edge::VisitNone;
-      for (auto & output : edge->outputs_) {
+      for (auto& output : edge->outputs_) {
         if (dependents->insert(output).second)
           UnmarkDependents(output, dependents);
       }
@@ -668,7 +663,7 @@ struct RealCommandRunner : public CommandRunner {
 
 std::vector<Edge*> RealCommandRunner::GetActiveEdges() {
   std::vector<Edge*> edges;
-  for (auto & e : subproc_to_edge_)
+  for (auto& e : subproc_to_edge_)
     edges.push_back(e.second);
   return edges;
 }
@@ -706,8 +701,7 @@ bool RealCommandRunner::WaitForCommand(Result* result) {
   result->status = subproc->Finish();
   result->output = subproc->GetOutput();
 
-  auto e =
-      subproc_to_edge_.find(subproc);
+  auto e = subproc_to_edge_.find(subproc);
   result->edge = e->second;
   subproc_to_edge_.erase(e);
 
@@ -733,7 +727,7 @@ void Builder::Cleanup() {
     std::vector<Edge*> active_edges = command_runner_->GetActiveEdges();
     command_runner_->Abort();
 
-    for (auto & active_edge : active_edges) {
+    for (auto& active_edge : active_edges) {
       std::string depfile = active_edge->GetUnescapedDepfile();
       for (auto o = active_edge->outputs_.begin();
            o != active_edge->outputs_.end(); ++o) {
@@ -890,7 +884,7 @@ bool Builder::StartEdge(Edge* edge, std::string* err) {
 
   // Create directories necessary for outputs.
   // XXX: this will block; do we care?
-  for (auto & output : edge->outputs_) {
+  for (auto& output : edge->outputs_) {
     if (!disk_interface_->MakeDirs(output->path()))
       return false;
   }
@@ -953,7 +947,7 @@ bool Builder::FinishCommand(CommandRunner::Result* result, std::string* err) {
   if (!config_.dry_run) {
     bool node_cleaned = false;
 
-    for (auto & output : edge->outputs_) {
+    for (auto& output : edge->outputs_) {
       TimeStamp new_mtime = disk_interface_->Stat(output->path(), err);
       if (new_mtime == -1)
         return false;
@@ -1040,7 +1034,7 @@ bool Builder::ExtractDeps(CommandRunner::Result* result,
     if (!parser.Parse(result->output, deps_prefix, &output, err))
       return false;
     result->output = output;
-    for (const auto & include : parser.includes_) {
+    for (const auto& include : parser.includes_) {
       // ~0 is assuming that with MSVC-parsed headers, it's ok to always make
       // all backslashes (as some of the slashes will certainly be backslashes
       // anyway). This could be fixed if necessary with some additional
@@ -1074,7 +1068,7 @@ bool Builder::ExtractDeps(CommandRunner::Result* result,
 
     // XXX check depfile matches expected output.
     deps_nodes->reserve(deps.ins_.size());
-    for (auto & in : deps.ins_) {
+    for (auto& in : deps.ins_) {
       uint64_t slash_bits;
       if (!CanonicalizePath(const_cast<char*>(in.str_), &in.len_, &slash_bits,
                             err))

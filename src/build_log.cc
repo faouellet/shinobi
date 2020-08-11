@@ -117,13 +117,13 @@ uint64_t BuildLog::LogEntry::HashCommand(StringPiece command) {
   return MurmurHash64A(command.str_, command.len_);
 }
 
-BuildLog::LogEntry::LogEntry(std::string  output) : output(std::move(output)) {}
+BuildLog::LogEntry::LogEntry(std::string output) : output(std::move(output)) {}
 
-BuildLog::LogEntry::LogEntry(std::string  output, uint64_t command_hash,
+BuildLog::LogEntry::LogEntry(std::string output, uint64_t command_hash,
                              int start_time, int end_time,
                              TimeStamp restat_mtime)
-    : output(std::move(output)), command_hash(command_hash), start_time(start_time),
-      end_time(end_time), mtime(restat_mtime) {}
+    : output(std::move(output)), command_hash(command_hash),
+      start_time(start_time), end_time(end_time), mtime(restat_mtime) {}
 
 BuildLog::BuildLog() : log_file_(nullptr) {}
 
@@ -146,8 +146,8 @@ bool BuildLog::OpenForWrite(const std::string& path, const BuildLogUser& user,
   std::setvbuf(log_file_, nullptr, _IOLBF, BUFSIZ);
   SetCloseOnExec(fileno(log_file_));
 
-  // Opening a file in append mode doesn't std::set the file pointer to the file's
-  // end on Windows. Do that explicitly.
+  // Opening a file in append mode doesn't std::set the file pointer to the
+  // file's end on Windows. Do that explicitly.
   fseek(log_file_, 0, SEEK_END);
 
   if (ftell(log_file_) == 0) {
@@ -164,7 +164,7 @@ bool BuildLog::RecordCommand(Edge* edge, int start_time, int end_time,
                              TimeStamp mtime) {
   std::string command = edge->EvaluateCommand(true);
   uint64_t command_hash = LogEntry::HashCommand(command);
-  for (auto & output : edge->outputs_) {
+  for (auto& output : edge->outputs_) {
     const std::string& path = output->path();
     auto i = entries_.find(path);
     LogEntry* log_entry;
@@ -205,7 +205,8 @@ struct LineReader {
   // Reads a \n-terminated line from the file passed to the constructor.
   // On return, *line_start points to the beginning of the next line, and
   // *line_end points to the \n at the end of the line. If no newline is seen
-  // in a fixed buffer size, *line_end is std::set to NULL. Returns false on EOF.
+  // in a fixed buffer size, *line_end is std::set to NULL. Returns false on
+  // EOF.
   bool ReadLine(char** line_start, char** line_end) {
     if (line_start_ >= buf_end_ || !line_end_) {
       // Buffer empty, refill.
@@ -397,7 +398,7 @@ bool BuildLog::Recompact(const std::string& path, const BuildLogUser& user,
   }
 
   std::vector<StringPiece> dead_outputs;
-  for (auto & entrie : entries_) {
+  for (auto& entrie : entries_) {
     if (user.IsPathDead(entrie.first)) {
       dead_outputs.push_back(entrie.first);
       continue;
@@ -410,7 +411,7 @@ bool BuildLog::Recompact(const std::string& path, const BuildLogUser& user,
     }
   }
 
-  for (auto & dead_output : dead_outputs)
+  for (auto& dead_output : dead_outputs)
     entries_.erase(dead_output);
 
   fclose(f);
@@ -446,7 +447,7 @@ bool BuildLog::Restat(const StringPiece path,
     fclose(f);
     return false;
   }
-  for (auto & entrie : entries_) {
+  for (auto& entrie : entries_) {
     bool skip = output_count > 0;
     for (int j = 0; j < output_count; ++j) {
       if (entrie.second->output == outputs[j]) {
