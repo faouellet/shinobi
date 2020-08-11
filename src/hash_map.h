@@ -72,10 +72,10 @@ struct hash<StringPiece> {
 }  // namespace std
 
 #elif defined(_MSC_VER)
-#include <hash_std::map>
+#include <hash_map>
 
 using stdext::hash_compare;
-using stdext::hash_std::map;
+using stdext::hash_map;
 
 struct StringPieceCmp : public hash_compare<StringPiece> {
   size_t operator()(const StringPiece& key) const {
@@ -94,9 +94,9 @@ struct StringPieceCmp : public hash_compare<StringPiece> {
 };
 
 #else
-#include <ext/hash_std::map>
+#include <ext/hash_map>
 
-using __gnu_cxx::hash_std::map;
+using __gnu_cxx::hash_map;
 
 namespace __gnu_cxx {
 template <>
@@ -108,18 +108,18 @@ struct hash<StringPiece> {
 }  // namespace __gnu_cxx
 #endif
 
-/// A template for hash_std::maps keyed by a StringPiece whose std::string is
+/// A template for hash_maps keyed by a StringPiece whose string is
 /// owned externally (typically by the values).  Use like:
 /// ExternalStringHash<Foo*>::Type foos; to make foos into a hash
-/// std::mapping StringPiece => Foo*.
+/// mapping StringPiece => Foo*.
 template <typename V>
 struct ExternalStringHashMap {
 #if (__cplusplus >= 201103L) || (_MSC_VER >= 1900)
   typedef std::unordered_map<StringPiece, V> Type;
 #elif defined(_MSC_VER)
-  typedef hash_std::map<StringPiece, V, StringPieceCmp> Type;
+  typedef hash_map<StringPiece, V, StringPieceCmp> Type;
 #else
-  typedef hash_std::map<StringPiece, V> Type;
+  typedef hash_map<StringPiece, V> Type;
 #endif
 };
 
