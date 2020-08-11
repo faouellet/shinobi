@@ -185,7 +185,7 @@ TimeStamp RealDiskInterface::Stat(const std::string& path,
 
   Cache::iterator ci = cache_.find(dir);
   if (ci == cache_.end()) {
-    ci = cache_.insert(make_std::pair(dir, DirCache())).first;
+    ci = cache_.emplace(dir, DirCache()).first;
     if (!StatAllFilesInDir(dir.empty() ? "." : dir, &ci->second, err)) {
       cache_.erase(ci);
       return -1;

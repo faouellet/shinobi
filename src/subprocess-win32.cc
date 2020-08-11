@@ -68,8 +68,8 @@ HANDLE Subprocess::SetupPipe(HANDLE ioport) {
   return output_write_child;
 }
 
-bool Subprocess::Start(SubprocessSet* std::set, const std::string& command) {
-  HANDLE child_pipe = SetupPipe(std::set->ioport_);
+bool Subprocess::Start(SubprocessSet* set, const std::string& command) {
+  HANDLE child_pipe = SetupPipe(set->ioport_);
 
   SECURITY_ATTRIBUTES security_attributes;
   memset(&security_attributes, 0, sizeof(SECURITY_ATTRIBUTES));
