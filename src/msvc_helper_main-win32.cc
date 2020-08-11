@@ -59,8 +59,8 @@ void WriteDepFileOrDie(const char* object_path, const CLParser& parse) {
     Fatal("writing %s", depfile_path.c_str());
   }
   const std::set<std::string>& headers = parse.includes_;
-  for (std::set<std::string>::const_iterator i = headers.begin(); i != headers.end();
-       ++i) {
+  for (std::set<std::string>::const_iterator i = headers.begin();
+       i != headers.end(); ++i) {
     if (fprintf(depfile, "%s\n", EscapeForDepfile(*i).c_str()) < 0) {
       unlink(object_path);
       fclose(depfile);
@@ -133,7 +133,7 @@ int MSVCHelperMain(int argc, char** argv) {
 
   // CLWrapper's output already as \r\n line endings, make sure the C runtime
   // doesn't expand this to \r\r\n.
-  _std::setmode(_fileno(stdout), _O_BINARY);
+  _setmode(_fileno(stdout), _O_BINARY);
   // Avoid printf and C std::strings, since the actual output might contain null
   // bytes like UTF-16 does (yuck).
   fwrite(&output[0], 1, output.size(), stdout);
