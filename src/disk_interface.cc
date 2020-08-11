@@ -15,12 +15,12 @@
 #include "disk_interface.h"
 
 #include <errno.h>
-#include <cstring>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include <algorithm>
+#include <cstring>
 
 #ifdef _WIN32
 #include <direct.h>  // _mkdir
@@ -94,7 +94,8 @@ bool IsWindows7OrLater() {
 }
 
 bool StatAllFilesInDir(const std::string& dir,
-                       std::map<std::string, TimeStamp>* stamps, std::string* err) {
+                       std::map<std::string, TimeStamp>* stamps,
+                       std::string* err) {
   // FindExInfoBasic is 30% faster than FindExInfoStandard.
   static bool can_use_basic_info = IsWindows7OrLater();
   // This is not in earlier SDKs.
@@ -120,9 +121,9 @@ bool StatAllFilesInDir(const std::string& dir,
       // This is the case at least on NTFS under Windows 7.
       continue;
     }
-    transform(lowername.begin(), lowername.end(), lowername.begin(), ::tolower);
-    stamps->insert(
-        make_std::pair(lowername, TimeStampFromFileTime(ffd.ftLastWriteTime)));
+    std::transform(lowername.begin(), lowername.end(), lowername.begin(),
+                   ::tolower);
+    stamps->emplace(lowername, TimeStampFromFileTime(ffd.ftLastWriteTime));
   } while (FindNextFileA(find_handle, &ffd));
   FindClose(find_handle);
   return true;
@@ -162,7 +163,7 @@ TimeStamp RealDiskInterface::Stat(const std::string& path,
   // MSDN: "Naming Files, Paths, and Namespaces"
   // http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
   if (!path.empty() && path[0] != '\\' && path.size() > MAX_PATH) {
-    ostd::stringstream err_stream;
+    std::ostringstream err_stream;
     err_stream << "Stat(" << path << "): Filename longer than " << MAX_PATH
                << " characters";
     *err = err_stream.str();
@@ -179,8 +180,8 @@ TimeStamp RealDiskInterface::Stat(const std::string& path,
     dir = path;
   }
 
-  transform(dir.begin(), dir.end(), dir.begin(), ::tolower);
-  transform(base.begin(), base.end(), base.begin(), ::tolower);
+  std::transform(dir.begin(), dir.end(), dir.begin(), ::tolower);
+  std::transform(base.begin(), base.end(), base.begin(), ::tolower);
 
   Cache::iterator ci = cache_.find(dir);
   if (ci == cache_.end()) {

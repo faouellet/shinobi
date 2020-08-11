@@ -167,13 +167,13 @@ void BuildStatus::BuildEdgeFinished(Edge* edge, bool success,
 
 #ifdef _WIN32
     // Fix extra CR being added on Windows, writing out CR CR LF (#773)
-    _std::setmode(_fileno(stdout), _O_BINARY);  // Begin Windows extra CR fix
+    _setmode(_fileno(stdout), _O_BINARY);  // Begin Windows extra CR fix
 #endif
 
     printer_.PrintOnNewLine(final_output);
 
 #ifdef _WIN32
-    _std::setmode(_fileno(stdout), _O_TEXT);  // End Windows extra CR fix
+    _setmode(_fileno(stdout), _O_TEXT);  // End Windows extra CR fix
 #endif
   }
 }
