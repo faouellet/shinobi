@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: [ubuntu-latest]
+    container:
+      image: centos:8
     steps:
     - uses: actions/checkout@v1
     - name: Install dependencies
