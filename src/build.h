@@ -215,7 +215,7 @@ struct Builder {
 #if __cplusplus < 201703L
   std::auto_ptr<CommandRunner> command_runner_;
 #else
-  std::nique_ptr<CommandRunner>
+  std::unique_ptr<CommandRunner>
       command_runner_;  // auto_ptr was removed in C++17.
 #endif
   BuildStatus* status_;
