@@ -24,7 +24,6 @@
 #include <string>
 #include <vector>
 
-
 #ifdef _MSC_VER
 #define NORETURN __declspec(noreturn)
 #else
@@ -33,20 +32,6 @@
 
 /// Log a fatal message and exit.
 NORETURN void Fatal(const char* msg, ...);
-
-// Have a generic fall-through for different versions of C/C++.
-#if defined(__cplusplus) && __cplusplus >= 201703L
-#define NINJA_FALLTHROUGH [[fallthrough]]
-#elif defined(__cplusplus) && __cplusplus >= 201103L && defined(__clang__)
-#define NINJA_FALLTHROUGH [[clang::fallthrough]]
-#elif defined(__cplusplus) && __cplusplus >= 201103L && defined(__GNUC__) && \
-    __GNUC__ >= 7
-#define NINJA_FALLTHROUGH [[gnu::fallthrough]]
-#elif defined(__GNUC__) && __GNUC__ >= 7 // gcc 7
-#define NINJA_FALLTHROUGH __attribute__ ((fallthrough))
-#else // C++11 on gcc 6, and all other cases
-#define NINJA_FALLTHROUGH
-#endif
 
 /// Log a warning message.
 void Warning(const char* msg, ...);
@@ -57,7 +42,8 @@ void Error(const char* msg, ...);
 /// Canonicalize a path like "foo/../bar.h" into just "bar.h".
 /// |slash_bits| has bits std::set starting from lowest for a backslash that was
 /// normalized to a forward slash. (only used on Windows)
-bool CanonicalizePath(std::string* path, uint64_t* slash_bits, std::string* err);
+bool CanonicalizePath(std::string* path, uint64_t* slash_bits,
+                      std::string* err);
 bool CanonicalizePath(char* path, size_t* len, uint64_t* slash_bits,
                       std::string* err);
 

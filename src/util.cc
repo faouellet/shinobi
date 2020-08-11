@@ -199,7 +199,7 @@ bool CanonicalizePath(char* path, size_t* len, uint64_t* slash_bits,
     case '\\':
       bits |= bits_mask;
       *c = '/';
-      NINJA_FALLTHROUGH;
+      [[fallthrough]];
     case '/':
       bits_mask <<= 1;
     }
