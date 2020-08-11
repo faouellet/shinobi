@@ -37,7 +37,7 @@ struct Dyndeps {
 /// to its dynamically-discovered dependency information.
 /// This is a struct rather than a typedef so that we can
 /// forward-declare it in other headers.
-struct DyndepFile: public std::map<Edge*, Dyndeps> {};
+struct DyndepFile : public std::map<Edge*, Dyndeps> {};
 
 /// DyndepLoader loads dynamically discovered dependencies, as
 /// referenced via the "dyndep" attribute in build files.

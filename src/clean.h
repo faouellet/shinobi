@@ -19,10 +19,8 @@
 #include <string>
 
 #include "build.h"
-#include "dyndep.h"
 #include "build_log.h"
-
-using namespace std;
+#include "dyndep.h"
 
 struct State;
 struct Node;
@@ -31,8 +29,7 @@ struct DiskInterface;
 
 struct Cleaner {
   /// Build a cleaner object with the given @a disk_interface
-  Cleaner(State* state,
-          const BuildConfig& config,
+  Cleaner(State* state, const BuildConfig& config,
           DiskInterface* disk_interface);
 
   /// Clean the given @a target and all the file built for it.
@@ -46,7 +43,7 @@ struct Cleaner {
   int CleanTargets(int target_count, char* targets[]);
 
   /// Clean all built files, except for files created by generator rules.
-  /// @param generator If set, also clean files created by generator rules.
+  /// @param generator If std::set, also clean files created by generator rules.
   /// @return non-zero if an error occurs.
   int CleanAll(bool generator = false);
 
@@ -65,28 +62,26 @@ struct Cleaner {
   int CleanDead(const BuildLog::Entries& entries);
 
   /// @return the number of file cleaned.
-  int cleaned_files_count() const {
-    return cleaned_files_count_;
-  }
+  int cleaned_files_count() const { return cleaned_files_count_; }
 
   /// @return whether the cleaner is in verbose mode.
   bool IsVerbose() const {
-    return (config_.verbosity != BuildConfig::QUIET
-            && (config_.verbosity == BuildConfig::VERBOSE || config_.dry_run));
+    return (config_.verbosity != BuildConfig::QUIET &&
+            (config_.verbosity == BuildConfig::VERBOSE || config_.dry_run));
   }
 
  private:
   /// Remove the file @a path.
   /// @return whether the file has been removed.
-  int RemoveFile(const string& path);
+  int RemoveFile(const std::string& path);
   /// @returns whether the file @a path exists.
-  bool FileExists(const string& path);
-  void Report(const string& path);
+  bool FileExists(const std::string& path);
+  void Report(const std::string& path);
 
   /// Remove the given @a path file only if it has not been already removed.
-  void Remove(const string& path);
+  void Remove(const std::string& path);
   /// @return whether the given @a path has already been removed.
-  bool IsAlreadyRemoved(const string& path);
+  bool IsAlreadyRemoved(const std::string& path);
   /// Remove the depfile and rspfile for an Edge.
   void RemoveEdgeFiles(Edge* edge);
 
@@ -103,8 +98,8 @@ struct Cleaner {
   State* state_;
   const BuildConfig& config_;
   DyndepLoader dyndep_loader_;
-  set<string> removed_;
-  set<Node*> cleaned_;
+  std::set<std::string> removed_;
+  std::set<Node*> cleaned_;
   int cleaned_files_count_;
   DiskInterface* disk_interface_;
   int status_;

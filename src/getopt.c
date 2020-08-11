@@ -9,7 +9,7 @@ DESCRIPTION:
 
 The getopt() function parses the command line arguments.  Its arguments argc
 and argv are the argument count and array as passed to the main() function
-on program invocation.  The argument optstring is a list of available option
+on program invocation.  The argument optstd::string is a list of available option
 characters.  If such a character is followed by a colon (`:'), the option
 takes an argument, which is placed in optarg.  If such a character is
 followed by two colons, the option takes an optional argument, which is
@@ -53,8 +53,8 @@ environment variable POSIXLY_CORRECT is defined, PERMUTE otherwise.
 
 REQUIRE_ORDER means don't recognize them as options; stop option processing
 when the first non-option is seen.  This is what Unix does.  This mode of
-operation is selected by either setting the environment variable
-POSIXLY_CORRECT, or using `+' as the first character of the optstring
+operation is selected by either std::setting the environment variable
+POSIXLY_CORRECT, or using `+' as the first character of the optstd::string
 parameter.
 
 PERMUTE is the default.  We permute the contents of ARGV as we scan, so that
@@ -65,7 +65,7 @@ RETURN_IN_ORDER is an option available to programs that were written to
 expect options and other argv-elements in any order and that care about the
 ordering of the two.  We describe each non-option argv-element as if it were
 the argument of an option with character code 1.  Using `-' as the first
-character of the optstring parameter selects this mode of operation.
+character of the optstd::string parameter selects this mode of operation.
 
 The special argument `--' forces an end of option-scanning regardless of the
 value of ordering.  In the case of RETURN_IN_ORDER, only `--' can cause
@@ -86,7 +86,7 @@ gpietsch@comcast.net
 /* include files */
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <cstring>
 #ifndef GETOPT_H
 #include "getopt.h"
 #endif
@@ -303,7 +303,7 @@ getopt_internal (int argc, char **argv, char *shortopts,
       possible_arg = argv[optind] + optwhere + 1;
       optopt = *cp;
     }
-  /* get argument and reset optwhere */
+  /* get argument and restd::set optwhere */
   arg_next = 0;
   switch (has_arg)
     {
@@ -387,9 +387,9 @@ getopt_internal (int argc, char **argv, char *shortopts,
 
 #ifndef _AIX
 int
-getopt (int argc, char **argv, char *optstring)
+getopt (int argc, char **argv, char *optstd::string)
 {
-  return getopt_internal (argc, argv, optstring, NULL, NULL, 0);
+  return getopt_internal (argc, argv, optstd::string, NULL, NULL, 0);
 }
 #endif
 

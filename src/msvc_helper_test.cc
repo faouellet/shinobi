@@ -18,22 +18,21 @@
 #include "util.h"
 
 TEST(EscapeForDepfileTest, SpacesInFilename) {
-  ASSERT_EQ("sub\\some\\ sdk\\foo.h",
-            EscapeForDepfile("sub\\some sdk\\foo.h"));
+  ASSERT_EQ("sub\\some\\ sdk\\foo.h", EscapeForDepfile("sub\\some sdk\\foo.h"));
 }
 
 TEST(MSVCHelperTest, EnvBlock) {
   char env_block[] = "foo=bar\0";
   CLWrapper cl;
   cl.SetEnvBlock(env_block);
-  string output;
+  std::string output;
   cl.Run("cmd /c \"echo foo is %foo%", &output);
   ASSERT_EQ("foo is bar\r\n", output);
 }
 
 TEST(MSVCHelperTest, NoReadOfStderr) {
   CLWrapper cl;
-  string output;
+  std::string output;
   cl.Run("cmd /c \"echo to stdout&& echo to stderr 1>&2", &output);
   ASSERT_EQ("to stdout\r\n", output);
 }

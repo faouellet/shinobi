@@ -14,10 +14,10 @@
 
 #include "build_log.h"
 
-#include "util.h"
-#include "test.h"
-
 #include <sys/stat.h>
+
+#include "test.h"
+#include "util.h"
 #ifdef _WIN32
 #include <fcntl.h>
 #include <share.h>
@@ -36,19 +36,17 @@ struct BuildLogTest : public StateTestWithBuiltinRules, public BuildLogUser {
     // In case a crashing test left a stale file behind.
     unlink(kTestFilename);
   }
-  virtual void TearDown() {
-    unlink(kTestFilename);
-  }
+  virtual void TearDown() { unlink(kTestFilename); }
   virtual bool IsPathDead(StringPiece s) const { return false; }
 };
 
 TEST_F(BuildLogTest, WriteRead) {
   AssertParse(&state_,
-"build out: cat mid\n"
-"build mid: cat in\n");
+              "build out: cat mid\n"
+              "build mid: cat in\n");
 
   BuildLog log1;
-  string err;
+  std::string err;
   EXPECT_TRUE(log1.OpenForWrite(kTestFilename, *this, &err));
   ASSERT_EQ("", err);
   log1.RecordCommand(state_.edges_[0], 15, 18);
@@ -75,7 +73,7 @@ TEST_F(BuildLogTest, FirstWriteAddsSignature) {
   const size_t kVersionPos = strlen(kExpectedVersion) - 2;  // Points at 'X'.
 
   BuildLog log;
-  string contents, err;
+  std::string contents, err;
 
   EXPECT_TRUE(log.OpenForWrite(kTestFilename, *this, &err));
   ASSERT_EQ("", err);
@@ -87,7 +85,7 @@ TEST_F(BuildLogTest, FirstWriteAddsSignature) {
     contents[kVersionPos] = 'X';
   EXPECT_EQ(kExpectedVersion, contents);
 
-  // Opening the file anew shouldn't add a second version string.
+  // Opening the file anew shouldn't add a second version std::string.
   EXPECT_TRUE(log.OpenForWrite(kTestFilename, *this, &err));
   ASSERT_EQ("", err);
   log.Close();
@@ -107,7 +105,7 @@ TEST_F(BuildLogTest, DoubleEntry) {
   fprintf(f, "3\t4\t5\tout\tcommand def\n");
   fclose(f);
 
-  string err;
+  std::string err;
   BuildLog log;
   EXPECT_TRUE(log.Load(kTestFilename, &err));
   ASSERT_EQ("", err);
@@ -119,12 +117,12 @@ TEST_F(BuildLogTest, DoubleEntry) {
 
 TEST_F(BuildLogTest, Truncate) {
   AssertParse(&state_,
-"build out: cat mid\n"
-"build mid: cat in\n");
+              "build out: cat mid\n"
+              "build mid: cat in\n");
 
   {
     BuildLog log1;
-    string err;
+    std::string err;
     EXPECT_TRUE(log1.OpenForWrite(kTestFilename, *this, &err));
     ASSERT_EQ("", err);
     log1.RecordCommand(state_.edges_[0], 15, 18);
@@ -140,7 +138,7 @@ TEST_F(BuildLogTest, Truncate) {
   // crash when parsing.
   for (off_t size = statbuf.st_size; size > 0; --size) {
     BuildLog log2;
-    string err;
+    std::string err;
     EXPECT_TRUE(log2.OpenForWrite(kTestFilename, *this, &err));
     ASSERT_EQ("", err);
     log2.RecordCommand(state_.edges_[0], 15, 18);
@@ -161,10 +159,10 @@ TEST_F(BuildLogTest, ObsoleteOldVersion) {
   fprintf(f, "123 456 0 out command\n");
   fclose(f);
 
-  string err;
+  std::string err;
   BuildLog log;
   EXPECT_TRUE(log.Load(kTestFilename, &err));
-  ASSERT_NE(err.find("version"), string::npos);
+  ASSERT_NE(err.find("version"), std::string::npos);
 }
 
 TEST_F(BuildLogTest, SpacesInOutputV4) {
@@ -173,7 +171,7 @@ TEST_F(BuildLogTest, SpacesInOutputV4) {
   fprintf(f, "123\t456\t456\tout with space\tcommand\n");
   fclose(f);
 
-  string err;
+  std::string err;
   BuildLog log;
   EXPECT_TRUE(log.Load(kTestFilename, &err));
   ASSERT_EQ("", err);
@@ -197,7 +195,7 @@ TEST_F(BuildLogTest, DuplicateVersionHeader) {
   fprintf(f, "456\t789\t789\tout2\tcommand2\n");
   fclose(f);
 
-  string err;
+  std::string err;
   BuildLog log;
   EXPECT_TRUE(log.Load(kTestFilename, &err));
   ASSERT_EQ("", err);
@@ -218,22 +216,23 @@ TEST_F(BuildLogTest, DuplicateVersionHeader) {
 }
 
 struct TestDiskInterface : public DiskInterface {
-  virtual TimeStamp Stat(const string& path, string* err) const {
+  virtual TimeStamp Stat(const std::string& path, std::string* err) const {
     return 4;
   }
-  virtual bool WriteFile(const string& path, const string& contents) {
+  virtual bool WriteFile(const std::string& path, const std::string& contents) {
     assert(false);
     return true;
   }
-  virtual bool MakeDir(const string& path) {
+  virtual bool MakeDir(const std::string& path) {
     assert(false);
     return false;
   }
-  virtual Status ReadFile(const string& path, string* contents, string* err) {
+  virtual Status ReadFile(const std::string& path, std::string* contents,
+                          std::string* err) {
     assert(false);
     return NotFound;
   }
-  virtual int RemoveFile(const string& path) {
+  virtual int RemoveFile(const std::string& path) {
     assert(false);
     return 0;
   }
@@ -241,8 +240,9 @@ struct TestDiskInterface : public DiskInterface {
 
 TEST_F(BuildLogTest, Restat) {
   FILE* f = fopen(kTestFilename, "wb");
-  fprintf(f, "# ninja log v4\n"
-             "1\t2\t3\tout\tcommand\n");
+  fprintf(f,
+          "# ninja log v4\n"
+          "1\t2\t3\tout\tcommand\n");
   fclose(f);
   std::string err;
   BuildLog log;
@@ -257,7 +257,7 @@ TEST_F(BuildLogTest, Restat) {
   EXPECT_TRUE(log.Restat(kTestFilename, testDiskInterface, 1, filter2, &err));
   ASSERT_EQ("", err);
   e = log.LookupByOutput("out");
-  ASSERT_EQ(3, e->mtime); // unchanged, since the filter doesn't match
+  ASSERT_EQ(3, e->mtime);  // unchanged, since the filter doesn't match
 
   EXPECT_TRUE(log.Restat(kTestFilename, testDiskInterface, 0, NULL, &err));
   ASSERT_EQ("", err);
@@ -277,7 +277,7 @@ TEST_F(BuildLogTest, VeryLongInputLine) {
   fprintf(f, "456\t789\t789\tout2\tcommand2\n");
   fclose(f);
 
-  string err;
+  std::string err;
   BuildLog log;
   EXPECT_TRUE(log.Load(kTestFilename, &err));
   ASSERT_EQ("", err);
@@ -294,8 +294,7 @@ TEST_F(BuildLogTest, VeryLongInputLine) {
 }
 
 TEST_F(BuildLogTest, MultiTargetEdge) {
-  AssertParse(&state_,
-"build out out.d: cat\n");
+  AssertParse(&state_, "build out out.d: cat\n");
 
   BuildLog log;
   log.RecordCommand(state_.edges_[0], 21, 22);
@@ -319,11 +318,11 @@ struct BuildLogRecompactTest : public BuildLogTest {
 
 TEST_F(BuildLogRecompactTest, Recompact) {
   AssertParse(&state_,
-"build out: cat in\n"
-"build out2: cat in\n");
+              "build out: cat in\n"
+              "build out2: cat in\n");
 
   BuildLog log1;
-  string err;
+  std::string err;
   EXPECT_TRUE(log1.OpenForWrite(kTestFilename, *this, &err));
   ASSERT_EQ("", err);
   // Record the same edge several times, to trigger recompaction

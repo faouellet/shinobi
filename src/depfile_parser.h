@@ -17,7 +17,7 @@
 
 #include <string>
 #include <vector>
-using namespace std;
+
 
 #include "string_piece.h"
 
@@ -33,10 +33,10 @@ struct DepfileParser {
   /// Parse an input file.  Input must be NUL-terminated.
   /// Warning: may mutate the content in-place and parsed StringPieces are
   /// pointers within it.
-  bool Parse(string* content, string* err);
+  bool Parse(std::string* content, std::string* err);
 
   std::vector<StringPiece> outs_;
-  vector<StringPiece> ins_;
+  std::vector<StringPiece> ins_;
   DepfileParserOptions options_;
 };
 

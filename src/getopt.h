@@ -40,7 +40,7 @@ extern "C"
 
   /* function prototypes */
 #ifndef _AIX
-  int getopt (int argc, char **argv, char *optstring);
+  int getopt (int argc, char **argv, char *optstd::string);
 #endif
   int getopt_long (int argc, char **argv, const char *shortopts,
                    const GETOPT_LONG_OPTION_T * longopts, int *longind);

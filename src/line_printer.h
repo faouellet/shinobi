@@ -16,8 +16,8 @@
 #define NINJA_LINE_PRINTER_H_
 
 #include <stddef.h>
+
 #include <string>
-using namespace std;
 
 /// Prints lines of text, possibly overprinting previously printed lines
 /// if the terminal supports it.
@@ -29,16 +29,13 @@ struct LinePrinter {
 
   bool supports_color() const { return supports_color_; }
 
-  enum LineType {
-    FULL,
-    ELIDE
-  };
+  enum LineType { FULL, ELIDE };
   /// Overprints the current line. If type is ELIDE, elides to_print to fit on
   /// one line.
-  void Print(string to_print, LineType type);
+  void Print(std::string to_print, LineType type);
 
-  /// Prints a string on a new line, not overprinting previous output.
-  void PrintOnNewLine(const string& to_print);
+  /// Prints a std::string on a new line, not overprinting previous output.
+  void PrintOnNewLine(const std::string& to_print);
 
   /// Lock or unlock the console.  Any output sent to the LinePrinter while the
   /// console is locked will not be printed until it is unlocked.
@@ -58,20 +55,20 @@ struct LinePrinter {
   bool console_locked_;
 
   /// Buffered current line while console is locked.
-  string line_buffer_;
+  std::string line_buffer_;
 
   /// Buffered line type while console is locked.
   LineType line_type_;
 
   /// Buffered console output while console is locked.
-  string output_buffer_;
+  std::string output_buffer_;
 
 #ifdef _WIN32
   void* console_;
 #endif
 
   /// Print the given data to the console, or buffer it if it is locked.
-  void PrintOrBuffer(const char *data, size_t size);
+  void PrintOrBuffer(const char* data, size_t size);
 };
 
 #endif  // NINJA_LINE_PRINTER_H_

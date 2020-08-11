@@ -49,9 +49,11 @@ bool DyndepLoader::LoadDyndeps(Node* node, DyndepFile* ddf,
 
     DyndepFile::iterator ddi = ddf->find(edge);
     if (ddi == ddf->end()) {
-      *err = ("'" + edge->outputs_[0]->path() + "' "
+      *err = ("'" + edge->outputs_[0]->path() +
+              "' "
               "not mentioned in its dyndep file "
-              "'" + node->path() + "'");
+              "'" +
+              node->path() + "'");
       return false;
     }
 
@@ -63,12 +65,14 @@ bool DyndepLoader::LoadDyndeps(Node* node, DyndepFile* ddf,
   }
 
   // Reject extra outputs in dyndep file.
-  for (DyndepFile::const_iterator oe = ddf->begin(); oe != ddf->end();
-       ++oe) {
+  for (DyndepFile::const_iterator oe = ddf->begin(); oe != ddf->end(); ++oe) {
     if (!oe->second.used_) {
       Edge* const edge = oe->first;
-      *err = ("dyndep file '" + node->path() + "' mentions output "
-              "'" + edge->outputs_[0]->path() + "' whose build statement "
+      *err = ("dyndep file '" + node->path() +
+              "' mentions output "
+              "'" +
+              edge->outputs_[0]->path() +
+              "' whose build statement "
               "does not have a dyndep binding for the file");
       return false;
     }
@@ -109,8 +113,7 @@ bool DyndepLoader::UpdateEdge(Edge* edge, Dyndeps const* dyndeps,
   edge->implicit_deps_ += dyndeps->implicit_inputs_.size();
 
   // Add this edge as outgoing from each new input.
-  for (std::vector<Node*>::const_iterator i =
-           dyndeps->implicit_inputs_.begin();
+  for (std::vector<Node*>::const_iterator i = dyndeps->implicit_inputs_.begin();
        i != dyndeps->implicit_inputs_.end(); ++i)
     (*i)->AddOutEdge(edge);
 

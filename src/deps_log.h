@@ -17,7 +17,7 @@
 
 #include <string>
 #include <vector>
-using namespace std;
+
 
 #include <stdio.h>
 
@@ -42,18 +42,18 @@ struct State;
 /// help guide the design space.  The total text in the files sums to
 /// 90mb so some compression is warranted to keep load-time fast.
 /// There's about 10k files worth of dependencies that reference about
-/// 40k total paths totalling 2mb of unique strings.
+/// 40k total paths totalling 2mb of unique std::strings.
 ///
 /// Based on these stats, here's the current design.
 /// The file is structured as version header followed by a sequence of records.
-/// Each record is either a path string or a dependency list.
-/// Numbering the path strings in file order gives them dense integer ids.
-/// A dependency list maps an output id to a list of input ids.
+/// Each record is either a path std::string or a dependency list.
+/// Numbering the path std::strings in file order gives them dense integer ids.
+/// A dependency list std::maps an output id to a list of input ids.
 ///
 /// Concretely, a record is:
 ///    four bytes record length, high bit indicates record type
 ///      (but max record sizes are capped at 512kB)
-///    path records contain the string name of the path, followed by up to 3
+///    path records contain the std::string name of the path, followed by up to 3
 ///      padding bytes to align on 4 byte boundaries, followed by the
 ///      one's complement of the expected index of the record (to detect
 ///      concurrent writes of multiple ninja processes to the log).
@@ -71,8 +71,8 @@ struct DepsLog {
   ~DepsLog();
 
   // Writing (build-time) interface.
-  bool OpenForWrite(const string& path, string* err);
-  bool RecordDeps(Node* node, TimeStamp mtime, const vector<Node*>& nodes);
+  bool OpenForWrite(const std::string& path, std::string* err);
+  bool RecordDeps(Node* node, TimeStamp mtime, const std::vector<Node*>& nodes);
   bool RecordDeps(Node* node, TimeStamp mtime, int node_count, Node** nodes);
   void Close();
 
@@ -85,11 +85,11 @@ struct DepsLog {
     int node_count;
     Node** nodes;
   };
-  LoadStatus Load(const string& path, State* state, string* err);
+  LoadStatus Load(const std::string& path, State* state, std::string* err);
   Deps* GetDeps(Node* node);
 
   /// Rewrite the known log entries, throwing away old data.
-  bool Recompact(const string& path, string* err);
+  bool Recompact(const std::string& path, std::string* err);
 
   /// Returns if the deps entry for a node is still reachable from the manifest.
   ///
@@ -100,8 +100,8 @@ struct DepsLog {
   bool IsDepsEntryLiveFor(Node* node);
 
   /// Used for tests.
-  const vector<Node*>& nodes() const { return nodes_; }
-  const vector<Deps*>& deps() const { return deps_; }
+  const std::vector<Node*>& nodes() const { return nodes_; }
+  const std::vector<Deps*>& deps() const { return deps_; }
 
  private:
   // Updates the in-memory representation.  Takes ownership of |deps|.
@@ -114,9 +114,9 @@ struct DepsLog {
   FILE* file_;
 
   /// Maps id -> Node.
-  vector<Node*> nodes_;
+  std::vector<Node*> nodes_;
   /// Maps id -> deps of that id.
-  vector<Deps*> deps_;
+  std::vector<Deps*> deps_;
 
   friend struct DepsLogTest;
 };

@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lexer.h"
-
 #include <stdio.h>
 
 #include "eval_env.h"
+#include "lexer.h"
 #include "util.h"
 
-bool Lexer::Error(const string& message, string* err) {
+bool Lexer::Error(const std::string& message, std::string* err) {
   // Compute line/column.
   int line = 1;
   const char* line_start = input_.str_;
@@ -47,11 +46,11 @@ bool Lexer::Error(const string& message, string* err) {
         break;
       }
     }
-    *err += string(line_start, len);
+    *err += std::string(line_start, len);
     if (truncated)
       *err += "...";
     *err += "\n";
-    *err += string(col, ' ');
+    *err += std::string(col, ' ');
     *err += "^ near here";
   }
 
@@ -71,21 +70,36 @@ void Lexer::Start(StringPiece filename, StringPiece input) {
 
 const char* Lexer::TokenName(Token t) {
   switch (t) {
-  case ERROR:    return "lexing error";
-  case BUILD:    return "'build'";
-  case COLON:    return "':'";
-  case DEFAULT:  return "'default'";
-  case EQUALS:   return "'='";
-  case IDENT:    return "identifier";
-  case INCLUDE:  return "'include'";
-  case INDENT:   return "indent";
-  case NEWLINE:  return "newline";
-  case PIPE2:    return "'||'";
-  case PIPE:     return "'|'";
-  case POOL:     return "'pool'";
-  case RULE:     return "'rule'";
-  case SUBNINJA: return "'subninja'";
-  case TEOF:     return "eof";
+  case ERROR:
+    return "lexing error";
+  case BUILD:
+    return "'build'";
+  case COLON:
+    return "':'";
+  case DEFAULT:
+    return "'default'";
+  case EQUALS:
+    return "'='";
+  case IDENT:
+    return "identifier";
+  case INCLUDE:
+    return "'include'";
+  case INDENT:
+    return "indent";
+  case NEWLINE:
+    return "newline";
+  case PIPE2:
+    return "'||'";
+  case PIPE:
+    return "'|'";
+  case POOL:
+    return "'pool'";
+  case RULE:
+    return "'rule'";
+  case SUBNINJA:
+    return "'subninja'";
+  case TEOF:
+    return "eof";
   }
   return NULL;  // not reached
 }
@@ -99,7 +113,7 @@ const char* Lexer::TokenErrorHint(Token expected) {
   }
 }
 
-string Lexer::DescribeLastError() {
+std::string Lexer::DescribeLastError() {
   if (last_token_) {
     switch (last_token_[0]) {
     case '\t':
@@ -180,7 +194,7 @@ void Lexer::EatWhitespace() {
   }
 }
 
-bool Lexer::ReadIdent(string* out) {
+bool Lexer::ReadIdent(std::string* out) {
   const char* p = ofs_;
   const char* start;
   for (;;) {
@@ -202,7 +216,7 @@ bool Lexer::ReadIdent(string* out) {
   return true;
 }
 
-bool Lexer::ReadEvalString(EvalString* eval, bool path, string* err) {
+bool Lexer::ReadEvalString(EvalString* eval, bool path, std::string* err) {
   const char* p = ofs_;
   const char* q;
   const char* start;
@@ -273,6 +287,6 @@ bool Lexer::ReadEvalString(EvalString* eval, bool path, string* err) {
   ofs_ = p;
   if (path)
     EatWhitespace();
-  // Non-path strings end in newlines, so there's no whitespace to eat.
+  // Non-path std::strings end in newlines, so there's no whitespace to eat.
   return true;
 }
