@@ -75,6 +75,8 @@ struct Options {
 
   /// Whether phony cycles should warn or print an error.
   bool phony_cycle_should_err;
+
+  const char* hosts_file;
 };
 
 /// The Ninja main() loads up a series of data structures; various tools need
@@ -222,7 +224,9 @@ void Usage(const BuildConfig& config) {
       "  -d MODE  enable debugging (use '-d list' to list modes)\n"
       "  -t TOOL  run a subtool (use '-t list' to list subtools)\n"
       "    terminates toplevel options; further flags are passed to the tool\n"
-      "  -w FLAG  adjust warnings (use '-w list' to list warnings)\n",
+      "  -w FLAG  adjust warnings (use '-w list' to list warnings)\n"
+      "\n"
+      "  --dist FILE  run in distributed mode with hosts specified in file\n",
       kNinjaVersion, config.parallelism);
 }
 
@@ -410,8 +414,7 @@ int NinjaMain::ToolBrowse(const Options*, int, char**) {
 
 #if defined(_MSC_VER)
 int NinjaMain::ToolMSVC(const Options* options, int argc, char* argv[]) {
-  // Restd::set getopt: push one argument onto the front of argv, restd::set
-  // optind.
+  // Reset getopt: push one argument onto the front of argv, reset optind.
   argc++;
   argv--;
   optind = 0;
@@ -1250,12 +1253,14 @@ int ExceptionFilter(unsigned int code, struct _EXCEPTION_POINTERS* ep) {
 int ReadFlags(int* argc, char*** argv, Options* options, BuildConfig* config) {
   config->parallelism = GuessParallelism();
 
-  enum { OPT_VERSION = 1 };
-  const option kLongOptions[] = { { "help", no_argument, nullptr, 'h' },
-                                  { "version", no_argument, nullptr,
-                                    OPT_VERSION },
-                                  { "verbose", no_argument, nullptr, 'v' },
-                                  { nullptr, 0, nullptr, 0 } };
+  enum { OPT_VERSION = 1, OPT_DIST = 2 };
+  const option kLongOptions[] = {
+    { "help", no_argument, nullptr, 'h' },
+    { "version", no_argument, nullptr, OPT_VERSION },
+    { "dist", required_argument, nullptr, OPT_DIST },
+    { "verbose", no_argument, nullptr, 'v' },
+    { nullptr, 0, nullptr, 0 }
+  };
 
   int opt;
   while (!options->tool &&
@@ -1321,6 +1326,9 @@ int ReadFlags(int* argc, char*** argv, Options* options, BuildConfig* config) {
     case OPT_VERSION:
       printf("%s\n", kNinjaVersion);
       return 0;
+    case OPT_DIST:
+      options->hosts_file = optarg;
+      break;
     case 'h':
     default:
       Usage(*config);
