@@ -230,6 +230,10 @@ struct TestDiskInterface : public DiskInterface {
     assert(false);
     return false;
   }
+  bool RemoveDir(const std::string& /*path*/) override {
+    assert(false);
+    return false;
+  }
   Status ReadFile(const std::string& /*path*/, std::string* /*contents*/,
                   std::string* /*err*/) override {
     assert(false);

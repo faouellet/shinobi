@@ -174,6 +174,13 @@ bool VirtualFileSystem::MakeDir(const std::string& path) {
   return true;  // success
 }
 
+bool VirtualFileSystem::RemoveDir(const std::string& path) {
+  directories_made_.erase(
+      std::remove(directories_made_.begin(), directories_made_.end(), path),
+      directories_made_.end());
+  return true;  // success
+}
+
 FileReader::Status VirtualFileSystem::ReadFile(const std::string& path,
                                                std::string* contents,
                                                std::string* err) {

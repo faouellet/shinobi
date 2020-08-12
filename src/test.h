@@ -28,10 +28,11 @@
 // sstream, which slows down building ninja_test almost 20%.
 namespace testing {
 class Test {
-  bool failed_{false};
-  int assertion_failures_{0};
+  bool failed_{ false };
+  int assertion_failures_{ 0 };
+
  public:
-  Test()  = default;
+  Test() = default;
   virtual ~Test() = default;
   virtual void SetUp() {}
   virtual void TearDown() {}
@@ -42,7 +43,7 @@ class Test {
   void AddAssertionFailure() { assertion_failures_++; }
   bool Check(bool condition, const char* file, int line, const char* error);
 };
-}
+}  // namespace testing
 
 void RegisterTest(testing::Test* (*)(), const char*);
 
@@ -78,22 +79,46 @@ extern testing::Test* g_current_test;
 #define EXPECT_FALSE(a) \
   g_current_test->Check(!static_cast<bool>(a), __FILE__, __LINE__, #a)
 
-#define ASSERT_EQ(a, b) \
-  if (!EXPECT_EQ(a, b)) { g_current_test->AddAssertionFailure(); return; }
-#define ASSERT_NE(a, b) \
-  if (!EXPECT_NE(a, b)) { g_current_test->AddAssertionFailure(); return; }
-#define ASSERT_GT(a, b) \
-  if (!EXPECT_GT(a, b)) { g_current_test->AddAssertionFailure(); return; }
-#define ASSERT_LT(a, b) \
-  if (!EXPECT_LT(a, b)) { g_current_test->AddAssertionFailure(); return; }
-#define ASSERT_GE(a, b) \
-  if (!EXPECT_GE(a, b)) { g_current_test->AddAssertionFailure(); return; }
-#define ASSERT_LE(a, b) \
-  if (!EXPECT_LE(a, b)) { g_current_test->AddAssertionFailure(); return; }
-#define ASSERT_TRUE(a)  \
-  if (!EXPECT_TRUE(a))  { g_current_test->AddAssertionFailure(); return; }
-#define ASSERT_FALSE(a) \
-  if (!EXPECT_FALSE(a)) { g_current_test->AddAssertionFailure(); return; }
+#define ASSERT_EQ(a, b)                    \
+  if (!EXPECT_EQ(a, b)) {                  \
+    g_current_test->AddAssertionFailure(); \
+    return;                                \
+  }
+#define ASSERT_NE(a, b)                    \
+  if (!EXPECT_NE(a, b)) {                  \
+    g_current_test->AddAssertionFailure(); \
+    return;                                \
+  }
+#define ASSERT_GT(a, b)                    \
+  if (!EXPECT_GT(a, b)) {                  \
+    g_current_test->AddAssertionFailure(); \
+    return;                                \
+  }
+#define ASSERT_LT(a, b)                    \
+  if (!EXPECT_LT(a, b)) {                  \
+    g_current_test->AddAssertionFailure(); \
+    return;                                \
+  }
+#define ASSERT_GE(a, b)                    \
+  if (!EXPECT_GE(a, b)) {                  \
+    g_current_test->AddAssertionFailure(); \
+    return;                                \
+  }
+#define ASSERT_LE(a, b)                    \
+  if (!EXPECT_LE(a, b)) {                  \
+    g_current_test->AddAssertionFailure(); \
+    return;                                \
+  }
+#define ASSERT_TRUE(a)                     \
+  if (!EXPECT_TRUE(a)) {                   \
+    g_current_test->AddAssertionFailure(); \
+    return;                                \
+  }
+#define ASSERT_FALSE(a)                    \
+  if (!EXPECT_FALSE(a)) {                  \
+    g_current_test->AddAssertionFailure(); \
+    return;                                \
+  }
 #define ASSERT_NO_FATAL_FAILURE(a)                           \
   {                                                          \
     int fail_count = g_current_test->AssertionFailures();    \
@@ -132,22 +157,22 @@ void VerifyGraph(const State& state);
 /// of disk state.  It also logs file accesses and directory creations
 /// so it can be used by tests to verify disk access patterns.
 struct VirtualFileSystem : public DiskInterface {
-  VirtualFileSystem()  = default;
+  VirtualFileSystem() = default;
 
   /// "Create" a file with contents.
   void Create(const std::string& path, const std::string& contents);
 
   /// Tick "time" forwards; subsequent file operations will be newer than
   /// previous ones.
-  int Tick() {
-    return ++now_;
-  }
+  int Tick() { return ++now_; }
 
   // DiskInterface
   TimeStamp Stat(const std::string& path, std::string* err) const override;
   bool WriteFile(const std::string& path, const std::string& contents) override;
   bool MakeDir(const std::string& path) override;
-  Status ReadFile(const std::string& path, std::string* contents, std::string* err) override;
+  bool RemoveDir(const std::string& path) override;
+  Status ReadFile(const std::string& path, std::string* contents,
+                  std::string* err) override;
   int RemoveFile(const std::string& path) override;
 
   /// An entry for a single in-memory file.
@@ -165,7 +190,7 @@ struct VirtualFileSystem : public DiskInterface {
   std::set<std::string> files_created_;
 
   /// A simple fake timestamp for file operations.
-  int now_{1};
+  int now_{ 1 };
 };
 
 struct ScopedTempDir {
@@ -181,4 +206,4 @@ struct ScopedTempDir {
   std::string temp_dir_name_;
 };
 
-#endif // NINJA_TEST_H_
+#endif  // NINJA_TEST_H_

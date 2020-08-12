@@ -208,25 +208,42 @@ TEST_F(DiskInterfaceTest, RemoveFile) {
   EXPECT_EQ(1, disk_.RemoveFile("does not exist"));
 }
 
+TEST_F(DiskInterfaceTest, RemoveDir) {
+  std::string path = "path/";
+  EXPECT_TRUE(disk_.MakeDirs(path.c_str()));
+  const std::string kFileName = path + "file-to-remove";
+  ASSERT_TRUE(Touch(kFileName.c_str()));
+
+  EXPECT_FALSE(disk_.RemoveDir(path));
+
+  EXPECT_EQ(0, disk_.RemoveFile(kFileName));
+  EXPECT_TRUE(disk_.RemoveDir(path));
+}
+
 struct StatTest : public StateTestWithBuiltinRules, public DiskInterface {
   StatTest() : scan_(&state_, nullptr, nullptr, this, nullptr) {}
 
   // DiskInterface implementation.
   TimeStamp Stat(const std::string& path, std::string* err) const override;
-  bool WriteFile(const std::string&  /*path*/, const std::string&  /*contents*/) override {
+  bool WriteFile(const std::string& /*path*/,
+                 const std::string& /*contents*/) override {
     assert(false);
     return true;
   }
-  bool MakeDir(const std::string&  /*path*/) override {
+  bool MakeDir(const std::string& /*path*/) override {
     assert(false);
     return false;
   }
-  Status ReadFile(const std::string&  /*path*/, std::string*  /*contents*/,
-                          std::string*  /*err*/) override {
+  bool RemoveDir(const std::string& /*path*/) override {
+    assert(false);
+    return false;
+  }
+  Status ReadFile(const std::string& /*path*/, std::string* /*contents*/,
+                  std::string* /*err*/) override {
     assert(false);
     return NotFound;
   }
-  int RemoveFile(const std::string&  /*path*/) override {
+  int RemoveFile(const std::string& /*path*/) override {
     assert(false);
     return 0;
   }
@@ -236,7 +253,7 @@ struct StatTest : public StateTestWithBuiltinRules, public DiskInterface {
   mutable std::vector<std::string> stats_;
 };
 
-TimeStamp StatTest::Stat(const std::string& path, std::string*  /*err*/) const {
+TimeStamp StatTest::Stat(const std::string& path, std::string* /*err*/) const {
   stats_.push_back(path);
   auto i = mtimes_.find(path);
   if (i == mtimes_.end())

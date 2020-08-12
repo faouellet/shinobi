@@ -46,6 +46,9 @@ struct DiskInterface : public FileReader {
   /// Create a directory, returning false on failure.
   virtual bool MakeDir(const std::string& path) = 0;
 
+  /// Remove a directory, returning false on failure.
+  virtual bool RemoveDir(const std::string& path) = 0;
+
   /// Create a file, with the specified name and contents
   /// Returns true on success, false on failure
   virtual bool WriteFile(const std::string& path,
@@ -75,6 +78,7 @@ struct RealDiskInterface : public DiskInterface {
   ~RealDiskInterface() override = default;
   TimeStamp Stat(const std::string& path, std::string* err) const override;
   bool MakeDir(const std::string& path) override;
+  bool RemoveDir(const std::string& path) override;
   bool WriteFile(const std::string& path, const std::string& contents) override;
   Status ReadFile(const std::string& path, std::string* contents,
                   std::string* err) override;

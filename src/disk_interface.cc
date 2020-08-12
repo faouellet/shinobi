@@ -16,6 +16,7 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <cerrno>
@@ -56,6 +57,14 @@ int MakeDir(const std::string& path) {
   return _mkdir(path.c_str());
 #else
   return mkdir(path.c_str(), 0777);
+#endif
+}
+
+int RemoveDir(const std::string& path) {
+#ifdef _WIN32
+  return _rmdir(path.c_str());
+#else
+  return rmdir(path.c_str());
 #endif
 }
 
@@ -250,6 +259,14 @@ bool RealDiskInterface::MakeDir(const std::string& path) {
       return true;
     }
     Error("mkdir(%s): %s", path.c_str(), strerror(errno));
+    return false;
+  }
+  return true;
+}
+
+bool RealDiskInterface::RemoveDir(const std::string& path) {
+  if (::RemoveDir(path) < 0) {
+    Error("rmdir(%s): %s", path.c_str(), strerror(errno));
     return false;
   }
   return true;
