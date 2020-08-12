@@ -8,6 +8,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+find_package(Boost COMPONENTS system REQUIRED)
+
+find_package(Threads)
+
 if(CMAKE_BUILD_TYPE MATCHES "Release")
 	cmake_policy(SET CMP0069 NEW)
 	include(CheckIPOSupported)
@@ -44,6 +48,12 @@ else()
 	add_library(libshinobi-re2c OBJECT src/depfile_parser.cc src/lexer.cc)
 endif()
 target_include_directories(libshinobi-re2c PRIVATE src)
+
+# Core source files all build into the daemon library
+add_library(libdaemon OBJECT
+	src/daemon.cc
+	src/dcache.cc
+)
 
 # Core source files all build into shinobi library.
 add_library(libshinobi OBJECT
@@ -91,7 +101,7 @@ endif()
 
 # Main executable is library plus main() function.
 add_executable(shinobi src/ninja.cc)
-target_link_libraries(shinobi PRIVATE libshinobi libshinobi-re2c)
+target_link_libraries(shinobi PRIVATE libshinobi libshinobi-re2c libdaemon Boost::system ${CMAKE_THREAD_LIBS_INIT})
 
 # Tests all build into shinobi_test executable.
 add_executable(shinobi_test
@@ -117,7 +127,7 @@ add_executable(shinobi_test
 if(WIN32)
 	target_sources(shinobi_test PRIVATE src/includes_normalize_test.cc src/msvc_helper_test.cc)
 endif()
-target_link_libraries(shinobi_test PRIVATE libshinobi libshinobi-re2c)
+target_link_libraries(shinobi_test PRIVATE libshinobi libshinobi-re2c libdaemon Boost::system ${CMAKE_THREAD_LIBS_INIT})
 
 foreach(perftest
   build_log_perftest
@@ -128,7 +138,7 @@ foreach(perftest
   manifest_parser_perftest
 )
   add_executable(${perftest} src/${perftest}.cc)
-  target_link_libraries(${perftest} PRIVATE libshinobi libshinobi-re2c)
+  target_link_libraries(${perftest} PRIVATE libshinobi libshinobi-re2c libdaemon ${CMAKE_THREAD_LIBS_INIT})
 endforeach()
 
 enable_testing()

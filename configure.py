@@ -319,12 +319,10 @@ if platform.is_msvc():
               '/wd4355',
               # Disable warnings about ignored typedef in DbgHelp.h
               '/wd4091',
-              '/GR-',  # Disable RTTI.
               # Disable size_t -> int truncation warning.
               # We never have strings or arrays larger than 2**31.
               '/wd4267',
               '/DNOMINMAX', '/D_CRT_SECURE_NO_WARNINGS',
-              '/D_HAS_EXCEPTIONS=0',
               '/DNINJA_PYTHON="%s"' % options.with_python]
     if platform.msvc_needs_fs():
         cflags.append('/FS')
@@ -337,14 +335,11 @@ else:
               '-Wno-deprecated',
               '-Wno-missing-field-initializers',
               '-Wno-unused-parameter',
-              '-fno-rtti',
-              '-fno-exceptions',
               '-fvisibility=hidden', '-pipe',
               '-std=c++17',
               '-DNINJA_PYTHON="%s"' % options.with_python]
     if options.debug:
         cflags += ['-D_GLIBCXX_DEBUG', '-D_GLIBCXX_DEBUG_PEDANTIC']
-        cflags.remove('-fno-rtti')  # Needed for above pedanticness.
     else:
         cflags += ['-O2', '-DNDEBUG']
     try:
@@ -358,7 +353,7 @@ else:
         pass
     if platform.is_mingw():
         cflags += ['-D_WIN32_WINNT=0x0601', '-D__USE_MINGW_ANSI_STDIO=1']
-    ldflags = ['-L$builddir']
+    ldflags = ['-L$builddir', '-lboost_system', '-pthread']
     if platform.uses_usr_local():
         cflags.append('-I/usr/local/include')
         ldflags.append('-L/usr/local/lib')
@@ -490,10 +485,30 @@ else:
            "changes to src/*.in.cc will not affect your build.")
 n.newline()
 
-n.comment('Core source files all build into shinobi library.')
+n.comment('Core source files all build into the daemon library')
 cxxvariables = []
 if platform.is_msvc():
-    cxxvariables = [('pdb', 'shinobi.pdb')]
+    cxxvariables = [('pdb', 'daemon.pdb')]
+for name in ['daemon, dcache']:
+    objs += cxx(name, variables=cxxvariables)
+if platform.is_msvc():
+    daemon_lib = n.build(built('daemon.lib'), 'ar', objs)
+else:
+    daemon_lib = n.build(built('libdaemon.a'), 'ar', objs)
+n.newline()
+
+if platform.is_msvc():
+    libs.append('daemon.lib')
+else:
+    libs.append('-ldaemon')
+
+all_targets = []
+
+n.comment('Core source files all build into shinobi library.')
+objs = []
+cxxvariables = []
+if platform.is_msvc():
+    cxxvariables = [('pdb', 'ninja.pdb')]
 for name in ['build',
              'build_log',
              'clean',
@@ -544,8 +559,6 @@ else:
 
 if platform.is_aix() and not platform.is_os400_pase():
     libs.append('-lperfstat')
-
-all_targets = []
 
 n.comment('Main executable is library plus main() function.')
 objs = cxx('shinobi', variables=cxxvariables)
