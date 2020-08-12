@@ -99,6 +99,12 @@ if(MINGW)
 target_compile_definitions(libshinobi PRIVATE _WIN32_WINNT=0x0601 __USE_MINGW_ANSI_STDIO=1)
 endif()
 
+# Distributed build support
+add_executable(daemon_exec 
+	src/daemon_exec.cc
+)
+target_link_libraries(daemon_exec PRIVATE libdaemon Boost::system ${CMAKE_THREAD_LIBS_INIT})
+
 # Main executable is library plus main() function.
 add_executable(shinobi src/ninja.cc)
 target_link_libraries(shinobi PRIVATE libshinobi libshinobi-re2c libdaemon Boost::system ${CMAKE_THREAD_LIBS_INIT})

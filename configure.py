@@ -504,6 +504,11 @@ else:
 
 all_targets = []
 
+n.comment('Distributed build support')
+objs = cxx('daemon_exec', variables=cxxvariables)
+all_targets += n.build(binary('daemon_exec'), 'link', objs, implicit=daemon_lib, variables=[('libs', libs)])
+n.newline()
+
 n.comment('Core source files all build into shinobi library.')
 objs = []
 cxxvariables = []
