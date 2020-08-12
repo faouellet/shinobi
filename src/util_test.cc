@@ -14,6 +14,8 @@
 
 #include "util.h"
 
+#include <cstring>
+
 #include "test.h"
 
 namespace {

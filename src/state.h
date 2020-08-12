@@ -18,11 +18,11 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "eval_env.h"
-#include "hash_map.h"
 #include "util.h"
 
 struct Edge;
@@ -38,7 +38,7 @@ struct Rule;
 /// the total scheduled weight diminishes enough (i.e. when a scheduled edge
 /// completes).
 struct Pool {
-  Pool(std::string  name, int depth)
+  Pool(std::string name, int depth)
       : name_(std::move(name)), current_use_(0), depth_(depth),
         delayed_(&WeightedEdgeCmp) {}
 
@@ -78,7 +78,7 @@ struct Pool {
 
   static bool WeightedEdgeCmp(const Edge* a, const Edge* b);
 
-  using DelayedEdges = std::set<Edge *, bool (*)(const Edge *, const Edge *)>;
+  using DelayedEdges = std::set<Edge*, bool (*)(const Edge*, const Edge*)>;
   DelayedEdges delayed_;
 };
 
@@ -95,13 +95,13 @@ struct State {
 
   Edge* AddEdge(const Rule* rule);
 
-  Node* GetNode(StringPiece path, uint64_t slash_bits);
-  Node* LookupNode(StringPiece path) const;
+  Node* GetNode(std::string_view path, uint64_t slash_bits);
+  Node* LookupNode(std::string_view path) const;
   Node* SpellcheckNode(const std::string& path);
 
-  void AddIn(Edge* edge, StringPiece path, uint64_t slash_bits);
-  bool AddOut(Edge* edge, StringPiece path, uint64_t slash_bits);
-  bool AddDefault(StringPiece path, std::string* error);
+  void AddIn(Edge* edge, std::string_view path, uint64_t slash_bits);
+  bool AddOut(Edge* edge, std::string_view path, uint64_t slash_bits);
+  bool AddDefault(std::string_view path, std::string* error);
 
   /// Restd::set state.  Keeps all nodes and edges, but restores them to the
   /// state where we haven't yet examined the disk for dirty state.
@@ -116,7 +116,7 @@ struct State {
   std::vector<Node*> DefaultNodes(std::string* error) const;
 
   /// Mapping of path -> Node.
-  using Paths = ExternalStringHashMap<Node *>::Type;
+  using Paths = std::unordered_map<std::string_view, Node*>;
   Paths paths_;
 
   /// All the pools used in the graph.

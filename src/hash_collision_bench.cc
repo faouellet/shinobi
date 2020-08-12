@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 
 #include "build_log.h"

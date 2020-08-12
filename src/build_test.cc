@@ -14,6 +14,7 @@
 
 #include "build.h"
 
+#include <algorithm>
 #include <cassert>
 
 #include "build_log.h"
@@ -44,7 +45,7 @@ struct PlanTest : public StateTestWithBuiltinRules {
       ret->push_back(edge);
     }
     ASSERT_FALSE(plan_.FindWork());
-    sort(ret->begin(), ret->end(), CompareEdgesByOutput::cmp);
+	std::sort(ret->begin(), ret->end(), CompareEdgesByOutput::cmp);
   }
 
   void TestPoolWithDepthOne(const char* test_case);
@@ -508,7 +509,7 @@ struct BuildTest : public StateTestWithBuiltinRules, public BuildLogUser {
 
   ~BuildTest() override { builder_.command_runner_.release(); }
 
-  bool IsPathDead(StringPiece  /*s*/) const override { return false; }
+  bool IsPathDead(std::string_view  /*s*/) const override { return false; }
 
   /// Rebuild target in the 'working tree' (fs_).
   /// State of command_runner_ and logs contents (if specified) ARE MODIFIED.

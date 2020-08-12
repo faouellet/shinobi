@@ -113,8 +113,8 @@ inline uint64_t MurmurHash64A(const void* key, size_t len) {
 }  // namespace
 
 // static
-uint64_t BuildLog::LogEntry::HashCommand(StringPiece command) {
-  return MurmurHash64A(command.str_, command.len_);
+uint64_t BuildLog::LogEntry::HashCommand(std::string_view command) {
+  return MurmurHash64A(command.data(), command.size());
 }
 
 BuildLog::LogEntry::LogEntry(std::string output) : output(std::move(output)) {}
@@ -342,7 +342,7 @@ LoadStatus BuildLog::Load(const std::string& path, std::string* err) {
       *end = c;
     } else {
       entry->command_hash =
-          LogEntry::HashCommand(StringPiece(start, end - start));
+          LogEntry::HashCommand(std::string_view(start, end - start));
     }
   }
   fclose(file);
@@ -397,7 +397,7 @@ bool BuildLog::Recompact(const std::string& path, const BuildLogUser& user,
     return false;
   }
 
-  std::vector<StringPiece> dead_outputs;
+  std::vector<std::string_view> dead_outputs;
   for (auto& entrie : entries_) {
     if (user.IsPathDead(entrie.first)) {
       dead_outputs.push_back(entrie.first);
@@ -428,14 +428,14 @@ bool BuildLog::Recompact(const std::string& path, const BuildLogUser& user,
   return true;
 }
 
-bool BuildLog::Restat(const StringPiece path,
+bool BuildLog::Restat(const std::string_view path,
                       const DiskInterface& disk_interface,
                       const int output_count, char** outputs,
                       std::string* const err) {
   METRIC_RECORD(".ninja_log restat");
 
   Close();
-  std::string temp_path = path.AsString() + ".restat";
+  std::string temp_path = std::string{ path } + ".restat";
   FILE* f = fopen(temp_path.c_str(), "wb");
   if (!f) {
     *err = strerror(errno);
@@ -472,12 +472,12 @@ bool BuildLog::Restat(const StringPiece path,
   }
 
   fclose(f);
-  if (unlink(path.str_) < 0) {
+  if (unlink(path.data()) < 0) {
     *err = strerror(errno);
     return false;
   }
 
-  if (rename(temp_path.c_str(), path.str_) < 0) {
+  if (rename(temp_path.c_str(), path.data()) < 0) {
     *err = strerror(errno);
     return false;
   }

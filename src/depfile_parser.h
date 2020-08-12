@@ -16,10 +16,8 @@
 #define NINJA_DEPFILE_PARSER_H_
 
 #include <string>
+#include <string_view>
 #include <vector>
-
-
-#include "string_piece.h"
 
 struct DepfileParserOptions {
   DepfileParserOptions() = default;
@@ -27,17 +25,16 @@ struct DepfileParserOptions {
 
 /// Parser for the dependency information emitted by gcc's -M flags.
 struct DepfileParser {
-  explicit DepfileParser(DepfileParserOptions options =
-                         DepfileParserOptions());
+  explicit DepfileParser(DepfileParserOptions options = DepfileParserOptions());
 
   /// Parse an input file.  Input must be NUL-terminated.
-  /// Warning: may mutate the content in-place and parsed StringPieces are
+  /// Warning: may mutate the content in-place and parsed std::string_views are
   /// pointers within it.
   bool Parse(std::string* content, std::string* err);
 
-  std::vector<StringPiece> outs_;
-  std::vector<StringPiece> ins_;
+  std::vector<std::string_view> outs_;
+  std::vector<std::string_view> ins_;
   DepfileParserOptions options_;
 };
 
-#endif // NINJA_DEPFILE_PARSER_H_
+#endif  // NINJA_DEPFILE_PARSER_H_

@@ -15,6 +15,7 @@
 // Tests manifest parser performance.  Expects to be run in ninja's root
 // directory.
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -67,7 +68,7 @@ int LoadManifests(bool measure_command_evaluation) {
   // evaluation in the perftest by default.
   int optimization_guard = 0;
   if (measure_command_evaluation)
-    for (auto & edge : state.edges_)
+    for (auto& edge : state.edges_)
       optimization_guard += edge->EvaluateCommand().size();
   return optimization_guard;
 }
@@ -113,8 +114,8 @@ int main(int argc, char* argv[]) {
     times.push_back(delta);
   }
 
-  int min = *min_element(times.begin(), times.end());
-  int max = *max_element(times.begin(), times.end());
-  float total = accumulate(times.begin(), times.end(), 0.0f);
+  int min = *std::min_element(times.begin(), times.end());
+  int max = *std::max_element(times.begin(), times.end());
+  float total = std::accumulate(times.begin(), times.end(), 0.0f);
   printf("min %dms  max %dms  avg %.1fms\n", min, max, total / times.size());
 }

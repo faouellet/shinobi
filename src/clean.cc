@@ -98,7 +98,7 @@ int Cleaner::CleanAll(bool generator) {
   Reset();
   PrintHeader();
   LoadDyndeps();
-  for (auto & edge : state_->edges_) {
+  for (auto& edge : state_->edges_) {
     // Do not try to remove phony targets
     if (edge->is_phony())
       continue;
@@ -119,10 +119,10 @@ int Cleaner::CleanAll(bool generator) {
 int Cleaner::CleanDead(const BuildLog::Entries& entries) {
   Reset();
   PrintHeader();
-  for (const auto & entrie : entries) {
+  for (const auto& entrie : entries) {
     Node* n = state_->LookupNode(entrie.first);
     if (!n || !n->in_edge()) {
-      Remove(entrie.first.AsString());
+      Remove(entrie.first.data());
     }
   }
   PrintFooter();
@@ -204,7 +204,7 @@ int Cleaner::CleanTargets(int target_count, char* targets[]) {
 void Cleaner::DoCleanRule(const Rule* rule) {
   assert(rule);
 
-  for (auto & edge : state_->edges_) {
+  for (auto& edge : state_->edges_) {
     if (edge->rule().name() == rule->name()) {
       for (auto out_node = edge->outputs_.begin();
            out_node != edge->outputs_.end(); ++out_node) {
@@ -271,7 +271,7 @@ void Cleaner::Reset() {
 
 void Cleaner::LoadDyndeps() {
   // Load dyndep files that exist, before they are cleaned.
-  for (auto & edge : state_->edges_) {
+  for (auto& edge : state_->edges_) {
     if (Node* dyndep = edge->dyndep_) {
       // Capture and ignore errors loading the dyndep file.
       // We clean as much of the graph as we know.

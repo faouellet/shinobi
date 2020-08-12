@@ -16,8 +16,10 @@
 
 #include <cassert>
 #include <cerrno>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <memory>
 
@@ -1070,7 +1072,8 @@ bool Builder::ExtractDeps(CommandRunner::Result* result,
     deps_nodes->reserve(deps.ins_.size());
     for (auto& in : deps.ins_) {
       uint64_t slash_bits;
-      if (!CanonicalizePath(const_cast<char*>(in.str_), &in.len_, &slash_bits,
+      size_t in_size = in.size();
+      if (!CanonicalizePath(const_cast<char*>(in.data()), &in_size, &slash_bits,
                             err))
         return false;
       deps_nodes->push_back(state_->GetNode(in, slash_bits));

@@ -26,6 +26,7 @@
 #include <unistd.h>
 #endif
 #include <cassert>
+#include <cstring>
 
 namespace {
 
@@ -37,7 +38,7 @@ struct BuildLogTest : public StateTestWithBuiltinRules, public BuildLogUser {
     unlink(kTestFilename);
   }
   void TearDown() override { unlink(kTestFilename); }
-  bool IsPathDead(StringPiece  /*s*/) const override { return false; }
+  bool IsPathDead(std::string_view /*s*/) const override { return false; }
 };
 
 TEST_F(BuildLogTest, WriteRead) {
@@ -216,23 +217,25 @@ TEST_F(BuildLogTest, DuplicateVersionHeader) {
 }
 
 struct TestDiskInterface : public DiskInterface {
-  TimeStamp Stat(const std::string&  /*path*/, std::string*  /*err*/) const override {
+  TimeStamp Stat(const std::string& /*path*/,
+                 std::string* /*err*/) const override {
     return 4;
   }
-  bool WriteFile(const std::string&  /*path*/, const std::string&  /*contents*/) override {
+  bool WriteFile(const std::string& /*path*/,
+                 const std::string& /*contents*/) override {
     assert(false);
     return true;
   }
-  bool MakeDir(const std::string&  /*path*/) override {
+  bool MakeDir(const std::string& /*path*/) override {
     assert(false);
     return false;
   }
-  Status ReadFile(const std::string&  /*path*/, std::string*  /*contents*/,
-                          std::string*  /*err*/) override {
+  Status ReadFile(const std::string& /*path*/, std::string* /*contents*/,
+                  std::string* /*err*/) override {
     assert(false);
     return NotFound;
   }
-  int RemoveFile(const std::string&  /*path*/) override {
+  int RemoveFile(const std::string& /*path*/) override {
     assert(false);
     return 0;
   }
@@ -313,7 +316,7 @@ TEST_F(BuildLogTest, MultiTargetEdge) {
 }
 
 struct BuildLogRecompactTest : public BuildLogTest {
-  bool IsPathDead(StringPiece s) const override { return s == "out2"; }
+  bool IsPathDead(std::string_view s) const override { return s == "out2"; }
 };
 
 TEST_F(BuildLogRecompactTest, Recompact) {

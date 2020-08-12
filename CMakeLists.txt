@@ -65,7 +65,7 @@ add_library(libshinobi OBJECT
 	src/metrics.cc
 	src/parser.cc
 	src/state.cc
-	src/string_piece_util.cc
+	src/string_view_util.cc
 	src/util.cc
 	src/version.cc
 )
@@ -109,7 +109,7 @@ add_executable(shinobi_test
 	src/manifest_parser_test.cc
 	src/ninja_test.cc
 	src/state_test.cc
-	src/string_piece_util_test.cc
+	src/string_view_util_test.cc
 	src/subprocess_test.cc
 	src/test.cc
 	src/util_test.cc

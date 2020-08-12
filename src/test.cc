@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstdlib>
+#include <cstring>
 
 #include "test.h"
 #ifdef _WIN32
@@ -120,10 +121,11 @@ void VerifyGraph(const State& state) {
     // All edges need at least one output.
     EXPECT_FALSE(edge->outputs_.empty());
     // Check that the edge's inputs have the edge as out-edge.
-    for (auto in_node = edge->inputs_.begin();
-         in_node != edge->inputs_.end(); ++in_node) {
+    for (auto in_node = edge->inputs_.begin(); in_node != edge->inputs_.end();
+         ++in_node) {
       const std::vector<Edge*>& out_edges = (*in_node)->out_edges();
-      EXPECT_NE(find(out_edges.begin(), out_edges.end(), edge), out_edges.end());
+      EXPECT_NE(find(out_edges.begin(), out_edges.end(), edge),
+                out_edges.end());
     }
     // Check that the edge's outputs have the edge as in-edge.
     for (auto out_node = edge->outputs_.begin();
@@ -134,7 +136,7 @@ void VerifyGraph(const State& state) {
 
   // The union of all in- and out-edges of each nodes should be exactly edges_.
   std::set<const Edge*> node_edge_set;
-  for (const auto & path : state.paths_) {
+  for (const auto& path : state.paths_) {
     const Node* n = path.second;
     if (n->in_edge())
       node_edge_set.insert(n->in_edge());

@@ -15,6 +15,8 @@
 #include "deps_log.h"
 
 #include <sys/stat.h>
+
+#include <cstring>
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -329,12 +331,11 @@ TEST_F(DepsLogTest, InvalidHeader) {
     "# ninjadeps\n\001\002",         // Truncated version int.
     "# ninjadeps\n\001\002\003\004"  // Invalid version int.
   };
-  for (auto & kInvalidHeader : kInvalidHeaders) {
+  for (auto& kInvalidHeader : kInvalidHeaders) {
     FILE* deps_log = fopen(kTestFilename, "wb");
     ASSERT_TRUE(deps_log != nullptr);
-    ASSERT_EQ(
-        strlen(kInvalidHeader),
-        fwrite(kInvalidHeader, 1, strlen(kInvalidHeader), deps_log));
+    ASSERT_EQ(strlen(kInvalidHeader),
+              fwrite(kInvalidHeader, 1, strlen(kInvalidHeader), deps_log));
     ASSERT_EQ(0, fclose(deps_log));
 
     std::string err;

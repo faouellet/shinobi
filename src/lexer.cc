@@ -63,7 +63,7 @@ Lexer::Lexer(const char* input) {
   Start("input", input);
 }
 
-void Lexer::Start(StringPiece filename, StringPiece input) {
+void Lexer::Start(std::string_view filename, std::string_view input) {
   filename_ = filename;
   input_ = input;
   ofs_ = input_.str_;
@@ -748,7 +748,7 @@ bool Lexer::ReadEvalString(EvalString* eval, bool path, std::string* err) {
         goto yy100;
       }
       {
-        eval->AddText(StringPiece(start, p - start));
+        eval->AddText(std::string_view(start, p - start));
         continue;
       }
     yy103:
@@ -760,7 +760,7 @@ bool Lexer::ReadEvalString(EvalString* eval, bool path, std::string* err) {
         } else {
           if (*start == '\n')
             break;
-          eval->AddText(StringPiece(start, 1));
+          eval->AddText(std::string_view(start, 1));
           continue;
         }
       }
@@ -832,13 +832,13 @@ bool Lexer::ReadEvalString(EvalString* eval, bool path, std::string* err) {
     yy116:
       ++p;
       {
-        eval->AddText(StringPiece(" ", 1));
+        eval->AddText(std::string_view(" ", 1));
         continue;
       }
     yy118:
       ++p;
       {
-        eval->AddText(StringPiece("$", 1));
+        eval->AddText(std::string_view("$", 1));
         continue;
       }
     yy120:
@@ -848,13 +848,13 @@ bool Lexer::ReadEvalString(EvalString* eval, bool path, std::string* err) {
         goto yy120;
       }
       {
-        eval->AddSpecial(StringPiece(start + 1, p - start - 1));
+        eval->AddSpecial(std::string_view(start + 1, p - start - 1));
         continue;
       }
     yy123:
       ++p;
       {
-        eval->AddText(StringPiece(":", 1));
+        eval->AddText(std::string_view(":", 1));
         continue;
       }
     yy125:
@@ -882,7 +882,7 @@ bool Lexer::ReadEvalString(EvalString* eval, bool path, std::string* err) {
     yy132:
       ++p;
       {
-        eval->AddSpecial(StringPiece(start + 2, p - start - 3));
+        eval->AddSpecial(std::string_view(start + 2, p - start - 3));
         continue;
       }
     }

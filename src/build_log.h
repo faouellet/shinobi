@@ -17,8 +17,8 @@
 
 #include <cstdio>
 #include <string>
+#include <unordered_map>
 
-#include "hash_map.h"
 #include "load_status.h"
 #include "timestamp.h"
 #include "util.h"  // uint64_t
@@ -30,7 +30,7 @@ struct Edge;
 struct BuildLogUser {
   /// Return if a given output is no longer part of the build manifest.
   /// This is only called during recompaction and doesn't have to be fast.
-  virtual bool IsPathDead(StringPiece s) const = 0;
+  virtual bool IsPathDead(std::string_view s) const = 0;
 };
 
 /// Store a log of every command ran for every build.
@@ -44,7 +44,8 @@ struct BuildLog {
   BuildLog();
   ~BuildLog();
 
-  bool OpenForWrite(const std::string& path, const BuildLogUser& user, std::string* err);
+  bool OpenForWrite(const std::string& path, const BuildLogUser& user,
+                    std::string* err);
   bool RecordCommand(Edge* edge, int start_time, int end_time,
                      TimeStamp mtime = 0);
   void Close();
@@ -59,18 +60,18 @@ struct BuildLog {
     int end_time;
     TimeStamp mtime;
 
-    static uint64_t HashCommand(StringPiece command);
+    static uint64_t HashCommand(std::string_view command);
 
     // Used by tests.
     bool operator==(const LogEntry& o) {
       return output == o.output && command_hash == o.command_hash &&
-          start_time == o.start_time && end_time == o.end_time &&
-          mtime == o.mtime;
+             start_time == o.start_time && end_time == o.end_time &&
+             mtime == o.mtime;
     }
 
-    explicit LogEntry(std::string  output);
-    LogEntry(std::string  output, uint64_t command_hash,
-             int start_time, int end_time, TimeStamp restat_mtime);
+    explicit LogEntry(std::string output);
+    LogEntry(std::string output, uint64_t command_hash, int start_time,
+             int end_time, TimeStamp restat_mtime);
   };
 
   /// Lookup a previously-run command by its output path.
@@ -80,19 +81,20 @@ struct BuildLog {
   static bool WriteEntry(FILE* f, const LogEntry& entry);
 
   /// Rewrite the known log entries, throwing away old data.
-  bool Recompact(const std::string& path, const BuildLogUser& user, std::string* err);
+  bool Recompact(const std::string& path, const BuildLogUser& user,
+                 std::string* err);
 
   /// Restat all outputs in the log
-  bool Restat(StringPiece path, const DiskInterface& disk_interface,
+  bool Restat(std::string_view path, const DiskInterface& disk_interface,
               int output_count, char** outputs, std::string* err);
 
-  using Entries = ExternalStringHashMap<LogEntry *>::Type;
+  using Entries = std::unordered_map<std::string_view, LogEntry*>;
   const Entries& entries() const { return entries_; }
 
  private:
   Entries entries_;
   FILE* log_file_;
-  bool needs_recompaction_{false};
+  bool needs_recompaction_{ false };
 };
 
-#endif // NINJA_BUILD_LOG_H_
+#endif  // NINJA_BUILD_LOG_H_

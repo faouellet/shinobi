@@ -99,16 +99,16 @@ Edge* State::AddEdge(const Rule* rule) {
   return edge;
 }
 
-Node* State::GetNode(StringPiece path, uint64_t slash_bits) {
+Node* State::GetNode(std::string_view path, uint64_t slash_bits) {
   Node* node = LookupNode(path);
   if (node)
     return node;
-  node = new Node(path.AsString(), slash_bits);
+  node = new Node(std::string{ path }, slash_bits);
   paths_[node->path()] = node;
   return node;
 }
 
-Node* State::LookupNode(StringPiece path) const {
+Node* State::LookupNode(std::string_view path) const {
   METRIC_RECORD("lookup node");
   auto i = paths_.find(path);
   if (i != paths_.end())
@@ -122,7 +122,7 @@ Node* State::SpellcheckNode(const std::string& path) {
 
   int min_distance = kMaxValidEditDistance + 1;
   Node* result = nullptr;
-  for (auto & i : paths_) {
+  for (auto& i : paths_) {
     int distance =
         EditDistance(i.first, path, kAllowReplacements, kMaxValidEditDistance);
     if (distance < min_distance && i.second) {
@@ -133,13 +133,13 @@ Node* State::SpellcheckNode(const std::string& path) {
   return result;
 }
 
-void State::AddIn(Edge* edge, StringPiece path, uint64_t slash_bits) {
+void State::AddIn(Edge* edge, std::string_view path, uint64_t slash_bits) {
   Node* node = GetNode(path, slash_bits);
   edge->inputs_.push_back(node);
   node->AddOutEdge(edge);
 }
 
-bool State::AddOut(Edge* edge, StringPiece path, uint64_t slash_bits) {
+bool State::AddOut(Edge* edge, std::string_view path, uint64_t slash_bits) {
   Node* node = GetNode(path, slash_bits);
   if (node->in_edge())
     return false;
@@ -148,10 +148,10 @@ bool State::AddOut(Edge* edge, StringPiece path, uint64_t slash_bits) {
   return true;
 }
 
-bool State::AddDefault(StringPiece path, std::string* err) {
+bool State::AddDefault(std::string_view path, std::string* err) {
   Node* node = LookupNode(path);
   if (!node) {
-    *err = "unknown target '" + path.AsString() + "'";
+    *err = "unknown target '" + std::string{ path } + "'";
     return false;
   }
   defaults_.push_back(node);
@@ -162,8 +162,8 @@ std::vector<Node*> State::RootNodes(std::string* err) const {
   std::vector<Node*> root_nodes;
   // Search for nodes with no output.
   for (auto edge : edges_) {
-    for (auto out = edge->outputs_.begin();
-         out != edge->outputs_.end(); ++out) {
+    for (auto out = edge->outputs_.begin(); out != edge->outputs_.end();
+         ++out) {
       if ((*out)->out_edges().empty())
         root_nodes.push_back(*out);
     }
@@ -180,9 +180,9 @@ std::vector<Node*> State::DefaultNodes(std::string* err) const {
 }
 
 void State::Reset() {
-  for (auto & path : paths_)
+  for (auto& path : paths_)
     path.second->ResetState();
-  for (auto & edge : edges_) {
+  for (auto& edge : edges_) {
     edge->outputs_ready_ = false;
     edge->deps_loaded_ = false;
     edge->mark_ = Edge::VisitNone;
@@ -190,7 +190,7 @@ void State::Reset() {
 }
 
 void State::Dump() {
-  for (auto & path : paths_) {
+  for (auto& path : paths_) {
     Node* node = path.second;
     printf(
         "%s %s [id:%d]\n", node->path().c_str(),
@@ -199,8 +199,7 @@ void State::Dump() {
   }
   if (!pools_.empty()) {
     printf("resource_pools:\n");
-    for (auto it = pools_.begin();
-         it != pools_.end(); ++it) {
+    for (auto it = pools_.begin(); it != pools_.end(); ++it) {
       if (!it->second->name().empty()) {
         it->second->Dump();
       }

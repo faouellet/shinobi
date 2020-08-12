@@ -90,7 +90,7 @@ std::string BindingEnv::LookupWithFallback(const std::string& var,
 
 std::string EvalString::Evaluate(Env* env) const {
   std::string result;
-  for (const auto & i : parsed_) {
+  for (const auto& i : parsed_) {
     if (i.second == RAW)
       result.append(i.first);
     else
@@ -99,21 +99,21 @@ std::string EvalString::Evaluate(Env* env) const {
   return result;
 }
 
-void EvalString::AddText(StringPiece text) {
+void EvalString::AddText(std::string_view text) {
   // Add it to the end of an existing RAW token if possible.
   if (!parsed_.empty() && parsed_.back().second == RAW) {
-    parsed_.back().first.append(text.str_, text.len_);
+    parsed_.back().first.append(text.data(), text.size());
   } else {
-    parsed_.emplace_back(text.AsString(), RAW);
+    parsed_.emplace_back(text, RAW);
   }
 }
-void EvalString::AddSpecial(StringPiece text) {
-  parsed_.emplace_back(text.AsString(), SPECIAL);
+void EvalString::AddSpecial(std::string_view text) {
+  parsed_.emplace_back(text, SPECIAL);
 }
 
 std::string EvalString::Serialize() const {
   std::string result;
-  for (const auto & i : parsed_) {
+  for (const auto& i : parsed_) {
     result.append("[");
     if (i.second == SPECIAL)
       result.append("$");
@@ -125,7 +125,7 @@ std::string EvalString::Serialize() const {
 
 std::string EvalString::Unparse() const {
   std::string result;
-  for (const auto & i : parsed_) {
+  for (const auto& i : parsed_) {
     bool special = (i.second == SPECIAL);
     if (special)
       result.append("${");

@@ -15,6 +15,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 #ifdef _WIN32
 #include "getopt.h"

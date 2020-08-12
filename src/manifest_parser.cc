@@ -14,6 +14,7 @@
 
 #include "manifest_parser.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
@@ -350,7 +351,7 @@ bool ManifestParser::ParseEdge(std::string* err) {
   edge->implicit_outs_ = implicit_outs;
 
   edge->inputs_.reserve(ins.size());
-  for (auto & in : ins) {
+  for (auto& in : ins) {
     std::string path = in.Evaluate(env);
     std::string path_err;
     uint64_t slash_bits;
@@ -368,8 +369,7 @@ bool ManifestParser::ParseEdge(std::string* err) {
     // build graph but that has since been fixed.  Filter them out to
     // support users of those old CMake versions.
     Node* out = edge->outputs_[0];
-    auto new_end =
-        remove(edge->inputs_.begin(), edge->inputs_.end(), out);
+    auto new_end = std::remove(edge->inputs_.begin(), edge->inputs_.end(), out);
     if (new_end != edge->inputs_.end()) {
       edge->inputs_.erase(new_end, edge->inputs_.end());
       if (!quiet_) {

@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <cstdio>
 
 #include "build_log.h"
@@ -95,7 +96,7 @@ bool DependencyScan::RecomputeDirty(Node* node, std::vector<Node*>* stack,
   }
 
   // Load output mtimes so we can compare them to the most recent input below.
-  for (auto & output : edge->outputs_) {
+  for (auto& output : edge->outputs_) {
     if (!output->StatIfNecessary(disk_interface_, err))
       return false;
   }
@@ -114,8 +115,7 @@ bool DependencyScan::RecomputeDirty(Node* node, std::vector<Node*>* stack,
 
   // Visit all inputs; we're dirty if any of the inputs are dirty.
   Node* most_recent_input = nullptr;
-  for (auto i = edge->inputs_.begin();
-       i != edge->inputs_.end(); ++i) {
+  for (auto i = edge->inputs_.begin(); i != edge->inputs_.end(); ++i) {
     // Visit this input.
     if (!RecomputeDirty(*i, stack, err))
       return false;
@@ -147,7 +147,7 @@ bool DependencyScan::RecomputeDirty(Node* node, std::vector<Node*>* stack,
       return false;
 
   // Finally, visit each output and update their dirty state if necessary.
-  for (auto & output : edge->outputs_) {
+  for (auto& output : edge->outputs_) {
     if (dirty)
       output->MarkDirty();
   }
@@ -211,10 +211,9 @@ bool DependencyScan::VerifyDAG(Node* node, std::vector<Node*>* stack,
 
 bool DependencyScan::RecomputeOutputsDirty(Edge* edge, Node* most_recent_input,
                                            bool* outputs_dirty,
-                                           std::string*  /*err*/) {
+                                           std::string* /*err*/) {
   std::string command = edge->EvaluateCommand(/*incl_rsp_file=*/true);
-  for (auto o = edge->outputs_.begin();
-       o != edge->outputs_.end(); ++o) {
+  for (auto o = edge->outputs_.begin(); o != edge->outputs_.end(); ++o) {
     if (RecomputeOutputDirty(edge, most_recent_input, command, *o)) {
       *outputs_dirty = true;
       return true;
@@ -434,13 +433,11 @@ std::string Edge::GetUnescapedRspfile() const {
 
 void Edge::Dump(const char* prefix) const {
   printf("%s[ ", prefix);
-  for (auto i = inputs_.begin();
-       i != inputs_.end() && *i != NULL; ++i) {
+  for (auto i = inputs_.begin(); i != inputs_.end() && *i != NULL; ++i) {
     printf("%s ", (*i)->path().c_str());
   }
   printf("--%s-> ", rule_->name().c_str());
-  for (auto i = outputs_.begin();
-       i != outputs_.end() && *i != NULL; ++i) {
+  for (auto i = outputs_.begin(); i != outputs_.end() && *i != NULL; ++i) {
     printf("%s ", (*i)->path().c_str());
   }
   if (pool_) {
@@ -471,7 +468,7 @@ bool Edge::maybe_phonycycle_diagnostic() const {
 
 // static
 std::string Node::PathDecanonicalized(const std::string& path,
-                                      uint64_t  /*slash_bits*/) {
+                                      uint64_t /*slash_bits*/) {
   std::string result = path;
 #ifdef _WIN32
   uint64_t mask = 1;
@@ -495,8 +492,8 @@ void Node::Dump(const char* prefix) const {
     printf("no in-edge\n");
   }
   printf(" out edges:\n");
-  for (auto e = out_edges().begin();
-       e != out_edges().end() && *e != NULL; ++e) {
+  for (auto e = out_edges().begin(); e != out_edges().end() && *e != NULL;
+       ++e) {
     (*e)->Dump(" +- ");
   }
 }
@@ -515,14 +512,14 @@ bool ImplicitDepLoader::LoadDeps(Edge* edge, std::string* err) {
 }
 
 struct matches {
-  matches(std::vector<StringPiece>::iterator i) : i_(i) {}
+  matches(std::vector<std::string_view>::iterator i) : i_(i) {}
 
   bool operator()(const Node* node) const {
-    auto opath = StringPiece(node->path());
+    auto opath = std::string_view(node->path());
     return *i_ == opath;
   }
 
-  std::vector<StringPiece>::iterator i_;
+  std::vector<std::string_view>::iterator i_;
 };
 
 bool ImplicitDepLoader::LoadDepFile(Edge* edge, const std::string& path,
@@ -561,8 +558,9 @@ bool ImplicitDepLoader::LoadDepFile(Edge* edge, const std::string& path,
 
   uint64_t unused;
   auto primary_out = depfile.outs_.begin();
-  if (!CanonicalizePath(const_cast<char*>(primary_out->str_),
-                        &primary_out->len_, &unused, err)) {
+  size_t primary_out_size = primary_out->size();
+  if (!CanonicalizePath(const_cast<char*>(primary_out->data()),
+                        &primary_out_size, &unused, err)) {
     *err = path + ": " + *err;
     return false;
   }
@@ -570,34 +568,33 @@ bool ImplicitDepLoader::LoadDepFile(Edge* edge, const std::string& path,
   // Check that this depfile matches the edge's output, if not return false to
   // mark the edge as dirty.
   Node* first_output = edge->outputs_[0];
-  auto opath = StringPiece(first_output->path());
+  auto opath = std::string_view(first_output->path());
   if (opath != *primary_out) {
     EXPLAIN("expected depfile '%s' to mention '%s', got '%s'", path.c_str(),
-            first_output->path().c_str(), primary_out->AsString().c_str());
+            first_output->path().c_str(), primary_out->data());
     return false;
   }
 
   // Ensure that all mentioned outputs are outputs of the edge.
-  for (auto o = depfile.outs_.begin();
-       o != depfile.outs_.end(); ++o) {
+  for (auto o = depfile.outs_.begin(); o != depfile.outs_.end(); ++o) {
     matches m(o);
     if (std::find_if(edge->outputs_.begin(), edge->outputs_.end(), m) ==
         edge->outputs_.end()) {
-      *err = path + ": depfile mentions '" + o->AsString() +
+      *err = path + ": depfile mentions '" + std::string{ *o } +
              "' as an output, but no such output was declared";
       return false;
     }
   }
 
   // Preallocate space in edge->inputs_ to be filled in below.
-  auto implicit_dep =
-      PreallocateSpace(edge, depfile.ins_.size());
+  auto implicit_dep = PreallocateSpace(edge, depfile.ins_.size());
 
   // Add all its in-edges.
-  for (auto i = depfile.ins_.begin();
-       i != depfile.ins_.end(); ++i, ++implicit_dep) {
+  for (auto i = depfile.ins_.begin(); i != depfile.ins_.end();
+       ++i, ++implicit_dep) {
     uint64_t slash_bits;
-    if (!CanonicalizePath(const_cast<char*>(i->str_), &i->len_, &slash_bits,
+    size_t size = i->size();
+    if (!CanonicalizePath(const_cast<char*>(i->data()), &size, &slash_bits,
                           err))
       return false;
 
@@ -610,7 +607,7 @@ bool ImplicitDepLoader::LoadDepFile(Edge* edge, const std::string& path,
   return true;
 }
 
-bool ImplicitDepLoader::LoadDepsFromLog(Edge* edge, std::string*  /*err*/) {
+bool ImplicitDepLoader::LoadDepsFromLog(Edge* edge, std::string* /*err*/) {
   // NOTE: deps are only supported for single-target edges.
   Node* output = edge->outputs_[0];
   DepsLog::Deps* deps = deps_log_ ? deps_log_->GetDeps(output) : nullptr;
@@ -627,8 +624,7 @@ bool ImplicitDepLoader::LoadDepsFromLog(Edge* edge, std::string*  /*err*/) {
     return false;
   }
 
-  auto implicit_dep =
-      PreallocateSpace(edge, deps->node_count);
+  auto implicit_dep = PreallocateSpace(edge, deps->node_count);
   for (int i = 0; i < deps->node_count; ++i, ++implicit_dep) {
     Node* node = deps->nodes[i];
     *implicit_dep = node;

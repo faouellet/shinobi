@@ -513,7 +513,7 @@ for name in ['build',
              'metrics',
              'parser',
              'state',
-             'string_piece_util',
+             'string_view_util',
              'util',
              'version']:
     objs += cxx(name, variables=cxxvariables)
@@ -579,7 +579,7 @@ for name in ['build_log_test',
              'manifest_parser_test',
              'ninja_test',
              'state_test',
-             'string_piece_util_test',
+             'string_view_util_test',
              'subprocess_test',
              'test',
              'util_test']:
