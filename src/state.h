@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "dcache.h"
 #include "eval_env.h"
 #include "util.h"
 
@@ -127,6 +128,8 @@ struct State {
 
   BindingEnv bindings_;
   std::vector<Node*> defaults_;
+
+  HostInfos hosts_;
 };
 
 #endif  // NINJA_STATE_H_

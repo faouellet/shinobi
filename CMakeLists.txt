@@ -70,6 +70,7 @@ add_library(libshinobi OBJECT
 	src/eval_env.cc
 	src/graph.cc
 	src/graphviz.cc
+	src/host_parser.cc
 	src/line_printer.cc
 	src/manifest_parser.cc
 	src/metrics.cc
