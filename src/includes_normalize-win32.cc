@@ -126,7 +126,7 @@ IncludesNormalize::IncludesNormalize(const std::string& relative_to) {
   if (!err.empty()) {
     Fatal("Initializing IncludesNormalize(): %s", err.c_str());
   }
-  split_relative_to_ = Splitstd::string_view(relative_to_, '/');
+  split_relative_to_ = SplitStringView(relative_to_, '/');
 }
 
 std::string IncludesNormalize::AbsPath(std::string_view s, std::string* err) {
@@ -156,8 +156,7 @@ std::string IncludesNormalize::Relativize(
   std::string abs_path = AbsPath(path, err);
   if (!err->empty())
     return "";
-  std::vector<std::string_view> path_list =
-      Splitstd::string_view(abs_path, '/');
+  std::vector<std::string_view> path_list = SplitStringView(abs_path, '/');
   int i;
   for (i = 0; i < static_cast<int>(min(start_list.size(), path_list.size()));
        ++i) {
@@ -174,7 +173,7 @@ std::string IncludesNormalize::Relativize(
     rel_list.push_back(path_list[j]);
   if (rel_list.size() == 0)
     return ".";
-  return Joinstd::string_view(rel_list, '/');
+  return JoinStringView(rel_list, '/');
 }
 
 bool IncludesNormalize::Normalize(const std::string& input, std::string* result,
