@@ -15,7 +15,9 @@
 #include "string_view_util.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
+#include <string_view>
 #include <vector>
 
 std::vector<std::string_view> SplitStringView(std::string_view input,
@@ -23,15 +25,15 @@ std::vector<std::string_view> SplitStringView(std::string_view input,
   std::vector<std::string_view> elems;
   elems.reserve(std::count(input.begin(), input.end(), sep) + 1);
 
-  std::string_view::const_iterator pos = input.begin();
+  size_t pos = 0;
 
   for (;;) {
-    const auto next_pos = std::find(pos, input.end(), sep);
-    if (next_pos == input.end()) {
-      elems.emplace_back(pos, input.end() - pos);
+    const size_t next_pos = input.find(sep, pos);
+    if (next_pos == std::string_view::npos) {
+      elems.emplace_back(input.data() + pos, input.size() - pos);
       break;
     }
-    elems.emplace_back(pos, next_pos - pos);
+    elems.emplace_back(input.data() + pos, next_pos - pos);
     pos = next_pos + 1;
   }
 
