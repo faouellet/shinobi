@@ -205,7 +205,7 @@ TEST_F(GraphTest, RootNodes) {
   std::string err;
   std::vector<Node*> root_nodes = state_.RootNodes(&err);
   EXPECT_EQ(4u, root_nodes.size());
-  for (auto & root_node : root_nodes) {
+  for (auto& root_node : root_nodes) {
     std::string name = root_node->path();
     EXPECT_EQ("out", name.substr(0, 3));
   }
@@ -223,24 +223,6 @@ TEST_F(GraphTest, VarInOutPathEscaping) {
   EXPECT_EQ("cat 'no'\\''space' 'with space$' 'no\"space2' > 'a b'",
             edge->EvaluateCommand());
 #endif
-}
-
-// Regression test for https://github.com/ninja-build/ninja/issues/380
-TEST_F(GraphTest, DepfileWithCanonicalizablePath) {
-  ASSERT_NO_FATAL_FAILURE(AssertParse(&state_,
-                                      "rule catdep\n"
-                                      "  depfile = $out.d\n"
-                                      "  command = cat $in > $out\n"
-                                      "build ./out.o: catdep ./foo.cc\n"));
-  fs_.Create("foo.cc", "");
-  fs_.Create("out.o.d", "out.o: bar/../foo.cc\n");
-  fs_.Create("out.o", "");
-
-  std::string err;
-  EXPECT_TRUE(scan_.RecomputeDirty(GetNode("out.o"), &err));
-  ASSERT_EQ("", err);
-
-  EXPECT_FALSE(GetNode("out.o")->dirty());
 }
 
 // Regression test for https://github.com/ninja-build/ninja/issues/404
