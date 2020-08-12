@@ -109,6 +109,7 @@ add_executable(shinobi_test
 	src/build_test.cc
 	src/clean_test.cc
 	src/clparser_test.cc
+        src/dcache_test.cc
 	src/depfile_parser_test.cc
 	src/deps_log_test.cc
 	src/disk_interface_test.cc
