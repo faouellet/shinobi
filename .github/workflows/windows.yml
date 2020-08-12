@@ -16,13 +16,12 @@ jobs:
     - name: Install dependencies
       run: |
         choco install re2c 
-        set BOOST_ROOT=%BOOST_ROOT_1_72_0%
 
     - name: Build shinobi
       shell: bash
       run: |
         mkdir build && cd build
-        cmake -DCMAKE_BUILD_TYPE=Release ..
+        cmake -DBoost_INCLUDE_DIR=$BOOST_ROOT_1_72_0/include -DCMAKE_BUILD_TYPE=Release ..
         cmake --build . --parallel --config Release
         ctest -vv
 
