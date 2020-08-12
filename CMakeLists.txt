@@ -47,7 +47,6 @@ else()
 	message(WARNING "re2c was not found; changes to src/*.in.cc will not affect your build.")
 	add_library(libshinobi-re2c OBJECT src/depfile_parser.cc src/lexer.cc)
 endif()
-target_include_directories(libshinobi-re2c PRIVATE src)
 
 # Core source files all build into the daemon library
 add_library(libdaemon OBJECT
@@ -104,12 +103,10 @@ endif()
 add_executable(daemon_exec 
 	src/daemon_exec.cc
 )
-target_include_directories(daemon_exec PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(daemon_exec PRIVATE libdaemon Boost::system ${CMAKE_THREAD_LIBS_INIT})
 
 # Main executable is library plus main() function.
 add_executable(shinobi src/ninja.cc)
-target_include_directories(shinobi PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(shinobi PRIVATE libshinobi libshinobi-re2c libdaemon Boost::system ${CMAKE_THREAD_LIBS_INIT})
 
 # Tests all build into shinobi_test executable.
@@ -150,7 +147,7 @@ foreach(perftest
   manifest_parser_perftest
 )
   add_executable(${perftest} src/${perftest}.cc)
-  target_link_libraries(${perftest} PRIVATE libshinobi libshinobi-re2c libdaemon ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${perftest} PRIVATE libshinobi libshinobi-re2c libdaemon Boost::system ${CMAKE_THREAD_LIBS_INIT})
 endforeach()
 
 enable_testing()
