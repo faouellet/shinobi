@@ -123,6 +123,7 @@ add_executable(shinobi_test
 	src/dyndep_parser_test.cc
 	src/edit_distance_test.cc
 	src/graph_test.cc
+        src/host_parser_test.cc
 	src/lexer_test.cc
 	src/manifest_parser_test.cc
 	src/ninja_test.cc
