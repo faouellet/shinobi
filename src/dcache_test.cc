@@ -14,10 +14,7 @@
 
 #include "dcache.h"
 
-#include <filesystem>
-#include <fstream>
 #include <iostream>
-#include <system_error>
 #include <thread>
 
 #include "daemon.h"
@@ -43,17 +40,11 @@ struct TestFixture : public testing::Test {
   void SetUp() override {
     // Testing should be done in a specially made directory
     // containing testing files
-    std::error_code err_code;
-    if (!std::filesystem::create_directory(test_dir_, err_code)) {
+    if (!disk_interface_.MakeDir(test_dir_)) {
       return;
     }
 
-    std::ofstream oStream{ GetTestFilePath() };
-    if (!oStream.is_open()) {
-      return;
-    }
-    oStream << litany;
-    if (!oStream.good()) {
+    if (!disk_interface_.WriteFile(GetTestFilePath(), litany)) {
       return;
     }
 
@@ -73,8 +64,8 @@ struct TestFixture : public testing::Test {
   void TearDown() override {
     daemon_->Stop();
     server_thread_.join();
-    std::error_code err_code;
-    std::filesystem::remove_all(test_dir_, err_code);
+    disk_interface_.RemoveFile(GetTestFilePath());
+    disk_interface_.RemoveDir(test_dir_);
   }
 
   const std::string& GetTestFileName() const { return test_file_; }
@@ -87,6 +78,9 @@ struct TestFixture : public testing::Test {
 
   /// Thread on which the Daemon will run
   std::thread server_thread_;
+
+  /// Interface allowing us to interact with the filesystem
+  RealDiskInterface disk_interface_;
 
   /// Physical resources of the testing environment
   inline static const std::string test_dir_{ "TEST_DIR" };
