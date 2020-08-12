@@ -102,10 +102,12 @@ endif()
 add_executable(daemon_exec 
 	src/daemon_exec.cc
 )
+target_include_directories(daemon_exec PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(daemon_exec PRIVATE libdaemon Boost::system ${CMAKE_THREAD_LIBS_INIT})
 
 # Main executable is library plus main() function.
 add_executable(shinobi src/ninja.cc)
+target_include_directories(shinobi PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(shinobi PRIVATE libshinobi libshinobi-re2c libdaemon Boost::system ${CMAKE_THREAD_LIBS_INIT})
 
 # Tests all build into shinobi_test executable.
@@ -134,7 +136,7 @@ add_executable(shinobi_test
 if(WIN32)
 	target_sources(shinobi_test PRIVATE src/includes_normalize_test.cc src/msvc_helper_test.cc)
 endif()
-target_include_directories(shinobi PRIVATE ${Boost_INCLUDE_DIRS})
+target_include_directories(shinobi_test PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(shinobi_test PRIVATE libshinobi libshinobi-re2c libdaemon Boost::system ${CMAKE_THREAD_LIBS_INIT})
 
 foreach(perftest
@@ -146,6 +148,7 @@ foreach(perftest
   manifest_parser_perftest
 )
   add_executable(${perftest} src/${perftest}.cc)
+  target_include_directories(shinobi_test PRIVATE ${Boost_INCLUDE_DIRS})
   target_link_libraries(${perftest} PRIVATE libshinobi libshinobi-re2c libdaemon Boost::system ${CMAKE_THREAD_LIBS_INIT})
 endforeach()
 
