@@ -22,7 +22,7 @@ jobs:
         curl -L -O https://www.mirrorservice.org/sites/dl.fedoraproject.org/pub/epel/7/x86_64/Packages/p/p7zip-plugins-16.02-10.el7.x86_64.rpm
         rpm -U --quiet p7zip-16.02-10.el7.x86_64.rpm
         rpm -U --quiet p7zip-plugins-16.02-10.el7.x86_64.rpm
-        yum install -y make gcc-c++ libboost-dev
+        yum install -y make gcc-c++ boost boost-devel boost-system
     - name: Build shinobi
       shell: bash
       run: |
