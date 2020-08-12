@@ -16,6 +16,7 @@
 #define NINJA_DCACHE_H_
 
 #include <memory>
+#include <string>
 #include <vector>
 
 class Host;

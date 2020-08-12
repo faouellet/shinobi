@@ -21,10 +21,10 @@ namespace net = boost::asio;
 
 static const char delim{ '\n' };
 
-#define RETURN_ON_ERROR(code, val)       \
-  if (code.failed()) {                   \
-    std::cerr << code.message() << '\n'; \
-    return val;                          \
+#define RETURN_ON_ERROR(error, val)       \
+  if (error) {                            \
+    std::cerr << error.message() << '\n'; \
+    return val;                           \
   }
 
 /// Host volunteering to be part of the distributed cache
