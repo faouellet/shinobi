@@ -468,7 +468,7 @@ bool Edge::maybe_phonycycle_diagnostic() const {
 
 // static
 std::string Node::PathDecanonicalized(const std::string& path,
-                                      uint64_t /*slash_bits*/) {
+                                      uint64_t slash_bits) {
   std::string result = path;
 #ifdef _WIN32
   uint64_t mask = 1;

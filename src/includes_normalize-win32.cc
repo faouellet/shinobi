@@ -19,18 +19,17 @@
 #include <sstream>
 
 #include "includes_normalize.h"
-#include <string_view>
 #include "string_view_util.h"
 #include "util.h"
 
 namespace {
 
-bool InternalGetFullPathName(const std::string_view& file_name, char* buffer,
+bool InternalGetFullPathName(std::string_view file_name, char* buffer,
                              size_t buffer_length, std::string* err) {
-  DWORD result_size = GetFullPathNameA(file_name.AsString().c_str(),
+  DWORD result_size = GetFullPathNameA(std::string{ file_name }.c_str(),
                                        buffer_length, buffer, NULL);
   if (result_size == 0) {
-    *err = "GetFullPathNameA(" + file_name.AsString() +
+    *err = "GetFullPathNameA(" + std::string{ file_name } +
            "): " + GetLastErrorString();
     return false;
   } else if (result_size > buffer_length) {
@@ -132,7 +131,7 @@ IncludesNormalize::IncludesNormalize(const std::string& relative_to) {
 
 std::string IncludesNormalize::AbsPath(std::string_view s, std::string* err) {
   if (IsFullPathName(s)) {
-    std::string result = s.AsString();
+    std::string result{ s };
     for (size_t i = 0; i < result.size(); ++i) {
       if (result[i] == '\\') {
         result[i] = '/';
@@ -157,7 +156,8 @@ std::string IncludesNormalize::Relativize(
   std::string abs_path = AbsPath(path, err);
   if (!err->empty())
     return "";
-  std::vector<std::string_view> path_list = Splitstd::string_view(abs_path, '/');
+  std::vector<std::string_view> path_list =
+      Splitstd::string_view(abs_path, '/');
   int i;
   for (i = 0; i < static_cast<int>(min(start_list.size(), path_list.size()));
        ++i) {
@@ -197,7 +197,7 @@ bool IncludesNormalize::Normalize(const std::string& input, std::string* result,
   if (!SameDrive(abs_input, relative_to_, err)) {
     if (!err->empty())
       return false;
-    *result = partially_fixed.AsString();
+    *result = partially_fixed;
     return true;
   }
   *result = Relativize(abs_input, split_relative_to_, err);

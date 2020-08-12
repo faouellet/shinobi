@@ -26,7 +26,7 @@ std::vector<std::string_view> SplitStringView(std::string_view input,
   std::string_view::const_iterator pos = input.begin();
 
   for (;;) {
-    const char* next_pos = std::find(pos, input.end(), sep);
+    const auto next_pos = std::find(pos, input.end(), sep);
     if (next_pos == input.end()) {
       elems.emplace_back(pos, input.end() - pos);
       break;
