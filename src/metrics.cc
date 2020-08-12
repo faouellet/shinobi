@@ -14,6 +14,7 @@
 
 #include "metrics.h"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
@@ -23,8 +24,6 @@
 #else
 #include <windows.h>
 #endif
-
-#include <algorithm>
 
 #include "util.h"
 
@@ -99,8 +98,8 @@ Metric* Metrics::NewMetric(const std::string& name) {
 
 void Metrics::Report() {
   int width = 0;
-  for (auto & metric : metrics_) {
-    width = std::max((int)metric->name.size(), width);
+  for (auto metric : metrics_) {
+    width = std::max((int)(metric->name.size()), width);
   }
 
   printf("%-*s\t%-6s\t%-9s\t%s\n", width, "metric", "count", "avg (us)",
