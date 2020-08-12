@@ -41,6 +41,7 @@
 #include "disk_interface.h"
 #include "graph.h"
 #include "graphviz.h"
+#include "host_parser.h"
 #include "manifest_parser.h"
 #include "metrics.h"
 #include "state.h"
@@ -1391,6 +1392,11 @@ NORETURN void real_main(int argc, char** argv) {
     ManifestParser parser(&ninja.state_, &ninja.disk_interface_, parser_opts);
     std::string err;
     if (!parser.Load(options.input_file, &err)) {
+      Error("%s", err.c_str());
+      exit(1);
+    }
+    HostParser host_parser(&ninja.state_, &ninja.disk_interface_);
+    if (!host_parser.Load(options.hosts_file, &err)) {
       Error("%s", err.c_str());
       exit(1);
     }
