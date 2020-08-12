@@ -54,7 +54,7 @@ struct TestFixture : public testing::Test {
       daemon_ = std::make_unique<Daemon>(8082, test_dir_);
       const ErrorCode run_error = daemon_->Run();
 
-      if (run_error.failed()) {
+      if (run_error) {
         std::cerr << run_error.message() << "\n";
       }
     } };
