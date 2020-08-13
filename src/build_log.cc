@@ -342,7 +342,7 @@ LoadStatus BuildLog::Load(const std::string& path, std::string* err) {
       *end = c;
     } else {
       entry->command_hash =
-          LogEntry::HashCommand(std::string_view(start, end - start));
+          LogEntry::Hash(std::string_view(start, end - start));
     }
   }
   fclose(file);

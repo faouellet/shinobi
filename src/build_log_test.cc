@@ -235,7 +235,7 @@ struct TestDiskInterface : public DiskInterface {
     return false;
   }
   Status ReadFile(const std::string& /*path*/, std::string* /*contents*/,
-                  std::string* /*err*/) override {
+                  std::string* /*err*/) const override {
     assert(false);
     return NotFound;
   }
