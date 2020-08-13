@@ -94,7 +94,7 @@ struct TestFixture : public testing::Test {
 TEST_F(TestFixture, Example) {
   const HostInfos infos{ { "localhost", "8082" } };
   DCache cache;
-  ASSERT_TRUE(cache.Init(infos));
+  cache.Init(infos);
 
   const std::vector<unsigned char> raw_contents{ cache.GetFileContents(
       GetTestFileName()) };

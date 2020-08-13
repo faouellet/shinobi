@@ -88,7 +88,7 @@ class Host {
 DCache::DCache() = default;
 DCache::~DCache() = default;
 
-bool DCache::Init(const HostInfos& infos) {
+void DCache::Init(const HostInfos& infos) {
   for (const auto& [addr, service] : infos) {
     auto host = std::make_unique<Host>();
     if (!host->Init(addr, service)) {
@@ -96,9 +96,6 @@ bool DCache::Init(const HostInfos& infos) {
     }
     hosts_.push_back(std::move(host));
   }
-
-  return !hosts_.empty();  // No hosts available == can't go ahead with
-                           // distributed caching mode
 }
 
 std::vector<unsigned char> DCache::GetFileContents(

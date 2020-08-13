@@ -30,7 +30,7 @@ class DCache {
   ~DCache();
 
   /// Initializes the distributed cache
-  bool Init(const HostInfos& infos);
+  void Init(const HostInfos& infos);
 
   /// Fetches the contents of a given file from the cache.
   /// The returned vector will be empty if a problem occurs or if
