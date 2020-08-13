@@ -46,6 +46,7 @@ else()
 	message(WARNING "re2c was not found; changes to src/*.in.cc will not affect your build.")
 	add_library(libshinobi-re2c OBJECT src/depfile_parser.cc src/lexer.cc)
 endif()
+target_include_directories(libshinobi-re2c PRIVATE src)
 
 # Core source files all build into the daemon library
 add_library(libdaemon OBJECT
