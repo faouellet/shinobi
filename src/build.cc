@@ -718,6 +718,7 @@ Builder::Builder(State* state, const BuildConfig& config, BuildLog* build_log,
       scan_(state, build_log, deps_log, disk_interface,
             &config_.depfile_parser_options) {
   status_ = new BuildStatus(config);
+  dcache_.Init(state_->hosts_);
 }
 
 Builder::~Builder() {

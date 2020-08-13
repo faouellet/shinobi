@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 
+#include "dcache.h"
 #include "depfile_parser.h"
 #include "exit_status.h"
 #include "graph.h"  // XXX needed for DependencyScan; should rearrange.
@@ -125,10 +126,10 @@ struct Plan {
   Builder* builder_;
 
   /// Total number of edges that have commands (not phony).
-  int command_edges_{0};
+  int command_edges_{ 0 };
 
   /// Total remaining number of wanted edges.
-  int wanted_edges_{0};
+  int wanted_edges_{ 0 };
 };
 
 /// CommandRunner is an interface that wraps running the build
@@ -157,21 +158,21 @@ struct CommandRunner {
 /// Options (e.g. verbosity, parallelism) passed to a build.
 struct BuildConfig {
   BuildConfig()
-      
-        = default;
+
+      = default;
 
   enum Verbosity {
     NORMAL,
     QUIET,  // No output -- used when testing.
     VERBOSE
   };
-  Verbosity verbosity{NORMAL};
-  bool dry_run{false};
-  int parallelism{1};
-  int failures_allowed{1};
+  Verbosity verbosity{ NORMAL };
+  bool dry_run{ false };
+  int parallelism{ 1 };
+  int failures_allowed{ 1 };
   /// The maximum load average we must not exceed. A negative value
   /// means that we do not have any limit.
-  double max_load_average{-0.0f};
+  double max_load_average{ -0.0f };
   DepfileParserOptions depfile_parser_options;
 };
 
@@ -219,6 +220,7 @@ struct Builder {
       command_runner_;  // auto_ptr was removed in C++17.
 #endif
   BuildStatus* status_;
+  DCache dcache_;
 
  private:
   bool ExtractDeps(CommandRunner::Result* result, const std::string& deps_type,
@@ -286,7 +288,7 @@ struct BuildStatus {
   }
 
   struct RateInfo {
-    RateInfo()  = default;
+    RateInfo() = default;
 
     void Restart() { stopwatch_.Restart(); }
     double Elapsed() const { return stopwatch_.Elapsed(); }
@@ -298,7 +300,7 @@ struct BuildStatus {
     }
 
    private:
-    double rate_{-1};
+    double rate_{ -1 };
     Stopwatch stopwatch_;
   };
 
