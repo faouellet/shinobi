@@ -113,7 +113,7 @@ void AssertParse(State* state, const char* input, ManifestParserOptions opts) {
 }
 
 void AssertHash(const char* expected, uint64_t actual) {
-  ASSERT_EQ(BuildLog::LogEntry::HashCommand(expected), actual);
+  ASSERT_EQ(BuildLog::LogEntry::Hash(expected), actual);
 }
 
 void VerifyGraph(const State& state) {
@@ -183,7 +183,7 @@ bool VirtualFileSystem::RemoveDir(const std::string& path) {
 
 FileReader::Status VirtualFileSystem::ReadFile(const std::string& path,
                                                std::string* contents,
-                                               std::string* err) {
+                                               std::string* err) const {
   files_read_.push_back(path);
   auto i = files_.find(path);
   if (i != files_.end()) {

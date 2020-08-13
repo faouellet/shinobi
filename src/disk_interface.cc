@@ -274,7 +274,7 @@ bool RealDiskInterface::RemoveDir(const std::string& path) {
 
 FileReader::Status RealDiskInterface::ReadFile(const std::string& path,
                                                std::string* contents,
-                                               std::string* err) {
+                                               std::string* err) const {
   switch (::ReadFile(path, contents, err)) {
   case 0:
     return Okay;

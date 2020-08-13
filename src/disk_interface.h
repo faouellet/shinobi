@@ -31,7 +31,7 @@ struct FileReader {
   /// Read and store in given std::string.  On success, return Okay.
   /// On error, return another Status and fill |err|.
   virtual Status ReadFile(const std::string& path, std::string* contents,
-                          std::string* err) = 0;
+                          std::string* err) const = 0;
 };
 
 /// Interface for accessing the disk.
@@ -81,7 +81,7 @@ struct RealDiskInterface : public DiskInterface {
   bool RemoveDir(const std::string& path) override;
   bool WriteFile(const std::string& path, const std::string& contents) override;
   Status ReadFile(const std::string& path, std::string* contents,
-                  std::string* err) override;
+                  std::string* err) const override;
   int RemoveFile(const std::string& path) override;
 
   /// Whether stat information can be cached.  Only has an effect on Windows.

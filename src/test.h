@@ -172,7 +172,7 @@ struct VirtualFileSystem : public DiskInterface {
   bool MakeDir(const std::string& path) override;
   bool RemoveDir(const std::string& path) override;
   Status ReadFile(const std::string& path, std::string* contents,
-                  std::string* err) override;
+                  std::string* err) const override;
   int RemoveFile(const std::string& path) override;
 
   /// An entry for a single in-memory file.
@@ -183,7 +183,7 @@ struct VirtualFileSystem : public DiskInterface {
   };
 
   std::vector<std::string> directories_made_;
-  std::vector<std::string> files_read_;
+  mutable std::vector<std::string> files_read_;
   using FileMap = std::map<std::string, Entry>;
   FileMap files_;
   std::set<std::string> files_removed_;
