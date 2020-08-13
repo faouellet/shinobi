@@ -60,7 +60,7 @@ struct BuildLog {
     int end_time;
     TimeStamp mtime;
 
-    static uint64_t HashCommand(std::string_view command);
+    static uint64_t Hash(std::string_view command);
 
     // Used by tests.
     bool operator==(const LogEntry& o) {

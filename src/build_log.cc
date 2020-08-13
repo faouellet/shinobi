@@ -113,7 +113,7 @@ inline uint64_t MurmurHash64A(const void* key, size_t len) {
 }  // namespace
 
 // static
-uint64_t BuildLog::LogEntry::HashCommand(std::string_view command) {
+uint64_t BuildLog::LogEntry::Hash(std::string_view command) {
   return MurmurHash64A(command.data(), command.size());
 }
 
@@ -163,7 +163,7 @@ bool BuildLog::OpenForWrite(const std::string& path, const BuildLogUser& user,
 bool BuildLog::RecordCommand(Edge* edge, int start_time, int end_time,
                              TimeStamp mtime) {
   std::string command = edge->EvaluateCommand(true);
-  uint64_t command_hash = LogEntry::HashCommand(command);
+  uint64_t command_hash = LogEntry::Hash(command);
   for (auto& output : edge->outputs_) {
     const std::string& path = output->path();
     auto i = entries_.find(path);
