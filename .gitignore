@@ -37,6 +37,9 @@ compile_commands.json
 /.vscode/
 /.ccls-cache/
 
+# Clangd folder
+/.clangd/
+
 # Qt Creator project files
 /CMakeLists.txt.user
 
