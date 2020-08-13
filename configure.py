@@ -567,7 +567,7 @@ if platform.is_aix() and not platform.is_os400_pase():
     libs.append('-lperfstat')
 
 n.comment('Main executable is library plus main() function.')
-objs = cxx('shinobi', variables=cxxvariables)
+objs = cxx('ninja', variables=cxxvariables)
 shinobi = n.build(binary('shinobi'), 'link', objs, implicit=shinobi_lib,
                 variables=[('libs', libs)])
 n.newline()
