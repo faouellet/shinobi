@@ -14,6 +14,7 @@
 
 #include "disk_interface.h"
 
+#include <bits/stdint-uintn.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -30,6 +31,7 @@
 #include <sstream>
 #endif
 
+#include "hash.h"
 #include "metrics.h"
 #include "util.h"
 
@@ -226,6 +228,15 @@ TimeStamp RealDiskInterface::Stat(const std::string& path,
   return (int64_t)st.st_mtime * 1000000000LL + st.st_mtimensec;
 #endif
 #endif
+}
+
+uint64_t RealDiskInterface::Hash(const std::string& path,
+                                 std::string* err) const {
+  std::string contents;
+  if (ReadFile(path, &contents, err) != Status::Okay) {
+    return 0;
+  }
+  return MurmurHash64A(contents.data(), contents.size());
 }
 
 bool RealDiskInterface::WriteFile(const std::string& path,

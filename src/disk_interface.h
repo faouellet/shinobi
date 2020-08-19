@@ -15,6 +15,8 @@
 #ifndef NINJA_DISK_INTERFACE_H_
 #define NINJA_DISK_INTERFACE_H_
 
+#include <bits/stdint-uintn.h>
+
 #include <map>
 #include <string>
 
@@ -42,6 +44,9 @@ struct DiskInterface : public FileReader {
   /// stat() a file, returning the mtime, or 0 if missing and -1 on
   /// other errors.
   virtual TimeStamp Stat(const std::string& path, std::string* err) const = 0;
+
+  /// Hash the contents of a file. Returns 0 in case an error happens.
+  virtual uint64_t Hash(const std::string& path, std::string* err) const = 0;
 
   /// Create a directory, returning false on failure.
   virtual bool MakeDir(const std::string& path) = 0;
@@ -77,6 +82,7 @@ struct RealDiskInterface : public DiskInterface {
 
   ~RealDiskInterface() override = default;
   TimeStamp Stat(const std::string& path, std::string* err) const override;
+  uint64_t Hash(const std::string& path, std::string* err) const override;
   bool MakeDir(const std::string& path) override;
   bool RemoveDir(const std::string& path) override;
   bool WriteFile(const std::string& path, const std::string& contents) override;

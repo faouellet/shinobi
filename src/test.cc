@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <bits/stdint-uintn.h>
+
+#include "hash.h"
 #ifdef _WIN32
 #include <direct.h>  // Has to be before util.h is included.
 #endif
@@ -160,6 +163,15 @@ TimeStamp VirtualFileSystem::Stat(const std::string& path,
     *err = i->second.stat_error;
     return i->second.mtime;
   }
+  return 0;
+}
+
+uint64_t VirtualFileSystem::Hash(const std::string& path, std::string* err) const {
+  auto i = files_.find(path);
+  if (i != files_.end()) {
+    return MurmurHash64A(i->second.contents.c_str(), i->second.contents.size());
+  }
+  *err = "File not found";
   return 0;
 }
 

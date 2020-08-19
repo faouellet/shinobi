@@ -15,6 +15,8 @@
 #ifndef NINJA_TEST_H_
 #define NINJA_TEST_H_
 
+#include <bits/stdint-uintn.h>
+
 #include "disk_interface.h"
 #include "manifest_parser.h"
 #include "state.h"
@@ -168,6 +170,7 @@ struct VirtualFileSystem : public DiskInterface {
 
   // DiskInterface
   TimeStamp Stat(const std::string& path, std::string* err) const override;
+  uint64_t Hash(const std::string& path, std::string* err) const override;
   bool WriteFile(const std::string& path, const std::string& contents) override;
   bool MakeDir(const std::string& path) override;
   bool RemoveDir(const std::string& path) override;

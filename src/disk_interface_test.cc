@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <bits/stdint-uintn.h>
+
 #include <cassert>
 #include <cstdio>
 #ifdef _WIN32
@@ -225,6 +227,10 @@ struct StatTest : public StateTestWithBuiltinRules, public DiskInterface {
 
   // DiskInterface implementation.
   TimeStamp Stat(const std::string& path, std::string* err) const override;
+  uint64_t Hash(const std::string& path, std::string* err) const override {
+    assert(false);
+    return 0;
+  }
   bool WriteFile(const std::string& /*path*/,
                  const std::string& /*contents*/) override {
     assert(false);

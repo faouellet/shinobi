@@ -221,6 +221,10 @@ struct TestDiskInterface : public DiskInterface {
                  std::string* /*err*/) const override {
     return 4;
   }
+  uint64_t Hash(const std::string& path, std::string* err) const override {
+    assert(false);
+    return 0;
+  }
   bool WriteFile(const std::string& /*path*/,
                  const std::string& /*contents*/) override {
     assert(false);
