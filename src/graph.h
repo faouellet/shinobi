@@ -15,6 +15,8 @@
 #ifndef NINJA_GRAPH_H_
 #define NINJA_GRAPH_H_
 
+#include <bits/stdint-uintn.h>
+
 #include <string>
 #include <utility>
 #include <vector>
@@ -36,9 +38,9 @@ struct State;
 /// Information about a node in the dependency graph: the file, whether
 /// it's dirty, mtime, etc.
 struct Node {
-  Node(std::string  path, uint64_t slash_bits)
-      : path_(std::move(path)), slash_bits_(slash_bits), mtime_(-1), dirty_(false),
-        dyndep_pending_(false), in_edge_(nullptr), id_(-1) {}
+  Node(std::string path, uint64_t slash_bits)
+      : path_(std::move(path)), slash_bits_(slash_bits), mtime_(-1),
+        dirty_(false), dyndep_pending_(false), in_edge_(nullptr), id_(-1) {}
 
   /// Return false on error.
   bool Stat(DiskInterface* disk_interface, std::string* err);
@@ -54,6 +56,7 @@ struct Node {
   void ResetState() {
     mtime_ = -1;
     dirty_ = false;
+	contents_hash_ = 0;
   }
 
   /// Mark the Node as already-stat()ed and missing.
@@ -73,6 +76,8 @@ struct Node {
   uint64_t slash_bits() const { return slash_bits_; }
 
   TimeStamp mtime() const { return mtime_; }
+
+  uint64_t contents_hash() const { return contents_hash_; }
 
   bool dirty() const { return dirty_; }
   void set_dirty(bool dirty) { dirty_ = dirty; }
@@ -105,6 +110,9 @@ struct Node {
   ///   >0: actual file's mtime
   TimeStamp mtime_;
 
+  /// Hash of the contents of the file.
+  uint64_t contents_hash_;
+
   /// Dirty is true when the underlying file is out-of-date.
   /// But note that Edge::outputs_ready_ is also used in judging which
   /// edges to build.
@@ -129,8 +137,7 @@ struct Node {
 struct Edge {
   enum VisitMark { VisitNone, VisitInStack, VisitDone };
 
-  Edge()
-      : rule_(nullptr), pool_(nullptr), dyndep_(nullptr), env_(nullptr) {}
+  Edge() : rule_(nullptr), pool_(nullptr), dyndep_(nullptr), env_(nullptr) {}
 
   /// Return true if all inputs' in-edges are ready.
   bool AllInputsReady() const;
@@ -159,10 +166,10 @@ struct Edge {
   std::vector<Node*> outputs_;
   Node* dyndep_;
   BindingEnv* env_;
-  VisitMark mark_{VisitNone};
-  bool outputs_ready_{false};
-  bool deps_loaded_{false};
-  bool deps_missing_{false};
+  VisitMark mark_{ VisitNone };
+  bool outputs_ready_{ false };
+  bool deps_loaded_{ false };
+  bool deps_missing_{ false };
 
   const Rule& rule() const { return *rule_; }
   Pool* pool() const { return pool_; }
@@ -177,8 +184,8 @@ struct Edge {
   //                     don't cause the target to rebuild.
   // These are stored in inputs_ in that order, and we keep counts of
   // #2 and #3 when we need to access the various substd::sets.
-  int implicit_deps_{0};
-  int order_only_deps_{0};
+  int implicit_deps_{ 0 };
+  int order_only_deps_{ 0 };
   bool is_implicit(size_t index) {
     return index >= inputs_.size() - order_only_deps_ - implicit_deps_ &&
            !is_order_only(index);
@@ -192,7 +199,7 @@ struct Edge {
   // 2) implicit outs, which the target generates but are not part of $out.
   // These are stored in outputs_ in that order, and we keep a count of
   // #2 to use when we need to access the various substd::sets.
-  int implicit_outs_{0};
+  int implicit_outs_{ 0 };
   bool is_implicit_out(size_t index) const {
     return index >= outputs_.size() - implicit_outs_;
   }
@@ -278,7 +285,8 @@ struct DependencyScan {
 
  private:
   bool RecomputeDirty(Node* node, std::vector<Node*>* stack, std::string* err);
-  static bool VerifyDAG(Node* node, std::vector<Node*>* stack, std::string* err);
+  static bool VerifyDAG(Node* node, std::vector<Node*>* stack,
+                        std::string* err);
 
   /// Recompute whether a given single output should be marked dirty.
   /// Returns true if so.

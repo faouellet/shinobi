@@ -14,6 +14,8 @@
 
 #include "build.h"
 
+#include <bits/stdint-uintn.h>
+
 #include <cassert>
 #include <cerrno>
 #include <cstddef>
@@ -339,7 +341,7 @@ bool Plan::AddSubTarget(const Node* node, const Node* dependent,
     return false;  // Don't need to do anything.
 
   // If an entry in want_ does not already exist for edge, create an entry which
-  // std::maps to kWantNothing, indicating that we do not want to build this
+  // maps to kWantNothing, indicating that we do not want to build this
   // entry itself.
   std::pair<std::map<Edge*, Want>::iterator, bool> want_ins =
       want_.emplace(edge, kWantNothing);
@@ -489,14 +491,10 @@ bool Plan::CleanNode(DependencyScan* scan, Node* node, std::string* err) {
 
     // If all non-order-only inputs for this edge are now clean,
     // we might have changed the dirty state of the outputs.
-    auto begin = oe->inputs_.begin(),
-         end = oe->inputs_.end() - oe->order_only_deps_;
-#if __cplusplus < 201703L
-#define MEM_FN std::mem_fun
-#else
-#define MEM_FN std::mem_fn  // mem_fun was removed in C++17.
-#endif
-    if (find_if(begin, end, MEM_FN(&Node::dirty)) == end) {
+    auto begin = oe->inputs_.begin();
+    auto end = oe->inputs_.end() - oe->order_only_deps_;
+
+    if (find_if(begin, end, std::mem_fn(&Node::dirty)) == end) {
       // Recompute most_recent_input.
       Node* most_recent_input = nullptr;
       for (auto i = begin; i != end; ++i) {
@@ -732,6 +730,10 @@ void Builder::Cleanup() {
 
     for (auto& active_edge : active_edges) {
       std::string depfile = active_edge->GetUnescapedDepfile();
+      if (!depfile.empty()) {
+        disk_interface_->RemoveFile(depfile);
+        continue;
+      }
       for (auto o = active_edge->outputs_.begin();
            o != active_edge->outputs_.end(); ++o) {
         // Only delete this output if it was actually modified.  This is
@@ -743,13 +745,20 @@ void Builder::Cleanup() {
         // but is interrupted before it touches its output file.)
         std::string err;
         TimeStamp new_mtime = disk_interface_->Stat((*o)->path(), &err);
-        if (new_mtime == -1)  // Log and ignore Stat() errors.
+        if (new_mtime == -1) {
+          // Log and ignore Stat() errors.
           Error("%s", err.c_str());
-        if (!depfile.empty() || (*o)->mtime() != new_mtime)
+        }
+        if ((*o)->mtime() != new_mtime) {
+          uint64_t new_contents_hash =
+              disk_interface_->Hash((*o)->path(), &err);
+          if (new_contents_hash == 0) {
+            // Log and ignore Hash() errors.
+            Error("%s", err.c_str());
+          }
           disk_interface_->RemoveFile((*o)->path());
+        }
       }
-      if (!depfile.empty())
-        disk_interface_->RemoveFile(depfile);
     }
   }
 }
@@ -935,7 +944,8 @@ bool Builder::FinishCommand(CommandRunner::Result* result, std::string* err) {
     }
   }
 
-  int start_time, end_time;
+  int start_time;
+  int end_time;
   status_->BuildEdgeFinished(edge, result->success(), result->output,
                              &start_time, &end_time);
 
@@ -957,7 +967,7 @@ bool Builder::FinishCommand(CommandRunner::Result* result, std::string* err) {
       if (new_mtime > output_mtime)
         output_mtime = new_mtime;
       if (output->mtime() == new_mtime && restat) {
-        // The rule command did not change the output.  Propagate the clean
+        // The rule command did not change the output. Propagate the clean
         // state through the build graph.
         // Note that this also applies to nonexistent outputs (mtime == 0).
         if (!plan_.CleanNode(&scan_, output, err))
@@ -1018,7 +1028,12 @@ bool Builder::FinishCommand(CommandRunner::Result* result, std::string* err) {
       TimeStamp deps_mtime = disk_interface_->Stat(output->path(), err);
       if (deps_mtime == -1)
         return false;
-      if (!scan_.deps_log()->RecordDeps(output, deps_mtime, deps_nodes)) {
+      uint64_t deps_contents_hash = disk_interface_->Hash(output->path(), err);
+      if (deps_contents_hash == 0) {
+        return false;
+      }
+      if (!scan_.deps_log()->RecordDeps(output, deps_mtime, deps_contents_hash,
+                                        deps_nodes)) {
         *err = std::string("Error writing to deps log: ") + strerror(errno);
         return false;
       }

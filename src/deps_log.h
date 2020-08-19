@@ -15,6 +15,8 @@
 #ifndef NINJA_DEPS_LOG_H_
 #define NINJA_DEPS_LOG_H_
 
+#include <bits/stdint-uintn.h>
+
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -40,18 +42,18 @@ struct State;
 /// help guide the design space.  The total text in the files sums to
 /// 90mb so some compression is warranted to keep load-time fast.
 /// There's about 10k files worth of dependencies that reference about
-/// 40k total paths totalling 2mb of unique std::strings.
+/// 40k total paths totalling 2mb of unique strings.
 ///
 /// Based on these stats, here's the current design.
 /// The file is structured as version header followed by a sequence of records.
-/// Each record is either a path std::string or a dependency list.
-/// Numbering the path std::strings in file order gives them dense integer ids.
-/// A dependency list std::maps an output id to a list of input ids.
+/// Each record is either a path string or a dependency list.
+/// Numbering the path strings in file order gives them dense integer ids.
+/// A dependency list maps an output id to a list of input ids.
 ///
 /// Concretely, a record is:
 ///    four bytes record length, high bit indicates record type
 ///      (but max record sizes are capped at 512kB)
-///    path records contain the std::string name of the path, followed by up to 3
+///    path records contain the string name of the path, followed by up to 3
 ///      padding bytes to align on 4 byte boundaries, followed by the
 ///      one's complement of the expected index of the record (to detect
 ///      concurrent writes of multiple ninja processes to the log).
@@ -65,21 +67,25 @@ struct State;
 /// wins, allowing updates to just be appended to the file.  A separate
 /// repacking step can run occasionally to remove dead records.
 struct DepsLog {
-  DepsLog() :  file_(nullptr) {}
+  DepsLog() : file_(nullptr) {}
   ~DepsLog();
 
   // Writing (build-time) interface.
   bool OpenForWrite(const std::string& path, std::string* err);
-  bool RecordDeps(Node* node, TimeStamp mtime, const std::vector<Node*>& nodes);
-  bool RecordDeps(Node* node, TimeStamp mtime, int node_count, Node** nodes);
+  bool RecordDeps(Node* node, TimeStamp mtime, uint64_t contents_hash,
+                  const std::vector<Node*>& nodes);
+  bool RecordDeps(Node* node, TimeStamp mtime, uint64_t contents_hash,
+                  int node_count, Node** nodes);
   void Close();
 
   // Reading (startup-time) interface.
   struct Deps {
-    Deps(int64_t mtime, int node_count)
-        : mtime(mtime), node_count(node_count), nodes(new Node*[node_count]) {}
-    ~Deps() { delete [] nodes; }
+    Deps(TimeStamp mtime, uint64_t contents_hash, int node_count)
+        : mtime(mtime), contents_hash_(contents_hash), node_count(node_count),
+          nodes(new Node*[node_count]) {}
+    ~Deps() { delete[] nodes; }
     TimeStamp mtime;
+    uint64_t contents_hash_;
     int node_count;
     Node** nodes;
   };
@@ -108,7 +114,7 @@ struct DepsLog {
   // Write a node name record, assigning it an id.
   bool RecordId(Node* node);
 
-  bool needs_recompaction_{false};
+  bool needs_recompaction_{ false };
   FILE* file_;
 
   /// Maps id -> Node.

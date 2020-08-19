@@ -48,12 +48,12 @@ TEST_F(DepsLogTest, WriteRead) {
     std::vector<Node*> deps;
     deps.push_back(state1.GetNode("foo.h", 0));
     deps.push_back(state1.GetNode("bar.h", 0));
-    log1.RecordDeps(state1.GetNode("out.o", 0), 1, deps);
+    log1.RecordDeps(state1.GetNode("out.o", 0), 1, 0, deps);
 
     deps.clear();
     deps.push_back(state1.GetNode("foo.h", 0));
     deps.push_back(state1.GetNode("bar2.h", 0));
-    log1.RecordDeps(state1.GetNode("out2.o", 0), 2, deps);
+    log1.RecordDeps(state1.GetNode("out2.o", 0), 2, 0, deps);
 
     DepsLog::Deps* log_deps = log1.GetDeps(state1.GetNode("out.o", 0));
     ASSERT_TRUE(log_deps);
@@ -103,7 +103,7 @@ TEST_F(DepsLogTest, LotsOfDeps) {
       sprintf(buf, "file%d.h", i);
       deps.push_back(state1.GetNode(buf, 0));
     }
-    log1.RecordDeps(state1.GetNode("out.o", 0), 1, deps);
+    log1.RecordDeps(state1.GetNode("out.o", 0), 1, 0, deps);
 
     DepsLog::Deps* log_deps = log1.GetDeps(state1.GetNode("out.o", 0));
     ASSERT_EQ(kNumDeps, log_deps->node_count);
@@ -134,7 +134,7 @@ TEST_F(DepsLogTest, DoubleEntry) {
     std::vector<Node*> deps;
     deps.push_back(state.GetNode("foo.h", 0));
     deps.push_back(state.GetNode("bar.h", 0));
-    log.RecordDeps(state.GetNode("out.o", 0), 1, deps);
+    log.RecordDeps(state.GetNode("out.o", 0), 1, 0, deps);
     log.Close();
 
     struct stat st;
@@ -156,7 +156,7 @@ TEST_F(DepsLogTest, DoubleEntry) {
     std::vector<Node*> deps;
     deps.push_back(state.GetNode("foo.h", 0));
     deps.push_back(state.GetNode("bar.h", 0));
-    log.RecordDeps(state.GetNode("out.o", 0), 1, deps);
+    log.RecordDeps(state.GetNode("out.o", 0), 1, 0, deps);
     log.Close();
 
     struct stat st;
@@ -188,12 +188,12 @@ TEST_F(DepsLogTest, Recompact) {
     std::vector<Node*> deps;
     deps.push_back(state.GetNode("foo.h", 0));
     deps.push_back(state.GetNode("bar.h", 0));
-    log.RecordDeps(state.GetNode("out.o", 0), 1, deps);
+    log.RecordDeps(state.GetNode("out.o", 0), 1, 0, deps);
 
     deps.clear();
     deps.push_back(state.GetNode("foo.h", 0));
     deps.push_back(state.GetNode("baz.h", 0));
-    log.RecordDeps(state.GetNode("other_out.o", 0), 1, deps);
+    log.RecordDeps(state.GetNode("other_out.o", 0), 1, 0, deps);
 
     log.Close();
 
@@ -217,7 +217,7 @@ TEST_F(DepsLogTest, Recompact) {
 
     std::vector<Node*> deps;
     deps.push_back(state.GetNode("foo.h", 0));
-    log.RecordDeps(state.GetNode("out.o", 0), 1, deps);
+    log.RecordDeps(state.GetNode("out.o", 0), 1, 0, deps);
     log.Close();
 
     struct stat st;
@@ -359,12 +359,12 @@ TEST_F(DepsLogTest, Truncated) {
     std::vector<Node*> deps;
     deps.push_back(state.GetNode("foo.h", 0));
     deps.push_back(state.GetNode("bar.h", 0));
-    log.RecordDeps(state.GetNode("out.o", 0), 1, deps);
+    log.RecordDeps(state.GetNode("out.o", 0), 1, 0, deps);
 
     deps.clear();
     deps.push_back(state.GetNode("foo.h", 0));
     deps.push_back(state.GetNode("bar2.h", 0));
-    log.RecordDeps(state.GetNode("out2.o", 0), 2, deps);
+    log.RecordDeps(state.GetNode("out2.o", 0), 2, 0, deps);
 
     log.Close();
   }
@@ -417,12 +417,12 @@ TEST_F(DepsLogTest, TruncatedRecovery) {
     std::vector<Node*> deps;
     deps.push_back(state.GetNode("foo.h", 0));
     deps.push_back(state.GetNode("bar.h", 0));
-    log.RecordDeps(state.GetNode("out.o", 0), 1, deps);
+    log.RecordDeps(state.GetNode("out.o", 0), 1, 0, deps);
 
     deps.clear();
     deps.push_back(state.GetNode("foo.h", 0));
     deps.push_back(state.GetNode("bar2.h", 0));
-    log.RecordDeps(state.GetNode("out2.o", 0), 2, deps);
+    log.RecordDeps(state.GetNode("out2.o", 0), 2, 0, deps);
 
     log.Close();
   }
@@ -454,7 +454,7 @@ TEST_F(DepsLogTest, TruncatedRecovery) {
     std::vector<Node*> deps;
     deps.push_back(state.GetNode("foo.h", 0));
     deps.push_back(state.GetNode("bar2.h", 0));
-    log.RecordDeps(state.GetNode("out2.o", 0), 3, deps);
+    log.RecordDeps(state.GetNode("out2.o", 0), 3, 0, deps);
 
     log.Close();
   }

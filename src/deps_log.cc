@@ -14,6 +14,8 @@
 
 #include "deps_log.h"
 
+#include <bits/stdint-uintn.h>
+
 #include <cassert>
 #include <cerrno>
 #include <cstdio>
@@ -33,7 +35,7 @@ typedef unsigned __int32 uint32_t;
 // The version is stored as 4 bytes after the signature and also serves as a
 // byte order mark. Signature and version combined are 16 bytes long.
 const char kFileSignature[] = "# ninjadeps\n";
-const int kCurrentVersion = 4;
+const int kCurrentVersion = 5;
 
 // Record size is currently limited to less than the full 32 bit, due to
 // internal buffers having to have this size.
@@ -59,7 +61,7 @@ bool DepsLog::OpenForWrite(const std::string& path, std::string* err) {
   setvbuf(file_, nullptr, _IOFBF, kMaxRecordSize + 1);
   SetCloseOnExec(fileno(file_));
 
-  // Opening a file in append mode doesn't std::set the file pointer to the
+  // Opening a file in append mode doesn't set the file pointer to the
   // file's end on Windows. Do that explicitly.
   fseek(file_, 0, SEEK_END);
 
@@ -80,14 +82,14 @@ bool DepsLog::OpenForWrite(const std::string& path, std::string* err) {
   return true;
 }
 
-bool DepsLog::RecordDeps(Node* node, TimeStamp mtime,
+bool DepsLog::RecordDeps(Node* node, TimeStamp mtime, uint64_t contents_hash,
                          const std::vector<Node*>& nodes) {
-  return RecordDeps(node, mtime, nodes.size(),
+  return RecordDeps(node, mtime, contents_hash, nodes.size(),
                     nodes.empty() ? nullptr : (Node**)&nodes.front());
 }
 
-bool DepsLog::RecordDeps(Node* node, TimeStamp mtime, int node_count,
-                         Node** nodes) {
+bool DepsLog::RecordDeps(Node* node, TimeStamp mtime, uint64_t contents_hash,
+                         int node_count, Node** nodes) {
   // Track whether there's any new data to be recorded.
   bool made_change = false;
 
@@ -108,7 +110,9 @@ bool DepsLog::RecordDeps(Node* node, TimeStamp mtime, int node_count,
   // See if the new data is different than the existing data, if any.
   if (!made_change) {
     Deps* deps = GetDeps(node);
-    if (!deps || deps->mtime != mtime || deps->node_count != node_count) {
+    if (!deps || (deps->mtime != mtime) ||
+        (deps->contents_hash_ != contents_hash) ||
+        (deps->node_count != node_count)) {
       made_change = true;
     } else {
       for (int i = 0; i < node_count; ++i) {
@@ -125,23 +129,35 @@ bool DepsLog::RecordDeps(Node* node, TimeStamp mtime, int node_count,
     return true;
 
   // Update on-disk representation.
-  unsigned size = 4 * (1 + 2 + node_count);
+  unsigned size = 4 * (/*Size*/ 1 + /*mtime*/ 2 + /*hash*/ 2 + node_count);
   if (size > kMaxRecordSize) {
     errno = ERANGE;
     return false;
   }
-  size |= 0x80000000;  // Deps record: std::set high bit.
+  // Size
+  size |= 0x80000000;  // Deps record: set high bit.
   if (fwrite(&size, 4, 1, file_) < 1)
     return false;
+  // Id
   int id = node->id();
   if (fwrite(&id, 4, 1, file_) < 1)
     return false;
+  // mtime
   auto mtime_part = static_cast<uint32_t>(mtime & 0xffffffff);
   if (fwrite(&mtime_part, 4, 1, file_) < 1)
     return false;
   mtime_part = static_cast<uint32_t>((mtime >> 32) & 0xffffffff);
   if (fwrite(&mtime_part, 4, 1, file_) < 1)
     return false;
+  // Contents hash
+  auto contents_hash_part = static_cast<uint32_t>(contents_hash & 0xffffffff);
+  if (fwrite(&contents_hash_part, 4, 1, file_) < 1)
+    return false;
+  contents_hash_part =
+      static_cast<uint32_t>((contents_hash >> 32) & 0xffffffff);
+  if (fwrite(&contents_hash_part, 4, 1, file_) < 1)
+    return false;
+  // Nodes
   for (int i = 0; i < node_count; ++i) {
     id = nodes[i]->id();
     if (fwrite(&id, 4, 1, file_) < 1)
@@ -151,7 +167,7 @@ bool DepsLog::RecordDeps(Node* node, TimeStamp mtime, int node_count,
     return false;
 
   // Update in-memory representation.
-  Deps* deps = new Deps(mtime, node_count);
+  Deps* deps = new Deps(mtime, contents_hash, node_count);
   for (int i = 0; i < node_count; ++i)
     deps->nodes[i] = nodes[i];
   UpdateDeps(node->id(), deps);
@@ -223,13 +239,15 @@ LoadStatus DepsLog::Load(const std::string& path, State* state,
       assert(size % 4 == 0);
       int* deps_data = reinterpret_cast<int*>(buf);
       int out_id = deps_data[0];
-      TimeStamp mtime;
-      mtime = (TimeStamp)(((uint64_t)(unsigned int)deps_data[2] << 32) |
-                          (uint64_t)(unsigned int)deps_data[1]);
-      deps_data += 3;
-      int deps_count = (size / 4) - 3;
+      TimeStamp mtime =
+          (TimeStamp)(((uint64_t)(unsigned int)deps_data[2] << 32) |
+                      (uint64_t)(unsigned int)deps_data[1]);
+      uint64_t contents_hash = (((uint64_t)(unsigned int)deps_data[4] << 32) |
+                                (uint64_t)(unsigned int)deps_data[3]);
+      deps_data += 5;
+      int deps_count = (size / 4) - 5;
 
-      Deps* deps = new Deps(mtime, deps_count);
+      Deps* deps = new Deps(mtime, contents_hash, deps_count);
       for (int i = 0; i < deps_count; ++i) {
         assert(deps_data[i] < (int)nodes_.size());
         assert(nodes_[deps_data[i]]);
@@ -331,7 +349,7 @@ bool DepsLog::Recompact(const std::string& path, std::string* err) {
 
   // Clear all known ids so that new ones can be reassigned.  The new indices
   // will refer to the ordering in new_log, not in the current log.
-  for (auto & node : nodes_)
+  for (auto& node : nodes_)
     node->set_id(-1);
 
   // Write out all deps again.
@@ -343,8 +361,8 @@ bool DepsLog::Recompact(const std::string& path, std::string* err) {
     if (!IsDepsEntryLiveFor(nodes_[old_id]))
       continue;
 
-    if (!new_log.RecordDeps(nodes_[old_id], deps->mtime, deps->node_count,
-                            deps->nodes)) {
+    if (!new_log.RecordDeps(nodes_[old_id], deps->mtime, deps->contents_hash_,
+                            deps->node_count, deps->nodes)) {
       new_log.Close();
       return false;
     }
